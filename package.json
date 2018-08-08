@@ -1,12 +1,35 @@
 {
-  "name": "rxrpc-ng",
+  "name": "ng-rxrpc",
   "version": "1.0.0",
-  "description": "RxRPC Library for Angular 2 and above",
-  "main": "index.js",
-  "repository": "https://github.com/slim-gears/rxrpc.git",
+  "description": "RxRPC client library for Angular 2 and above",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "Apache-2.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slim-gears/rxrpc.git"
+  },
+  "keywords": [
+    "rxjs",
+    "angular",
+    "websocket",
+    "rpc"
+  ],
+  "author": "Denis Itskovich",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/slim-gears/rxrpc/issues"
+  },
+  "homepage": "https://github.com/slim-gears/rxrpc#readme",
+  "devDependencies": {
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@angular/common": "^6.1.2",
+    "@angular/core": "^6.1.2",
+    "rxjs": "^6.2.2"
+  }
 }
