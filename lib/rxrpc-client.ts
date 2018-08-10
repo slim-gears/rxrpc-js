@@ -12,6 +12,6 @@ export class RxRpcClient {
     }
 
     public test(): string {
-        return "Hello, World!";
+        return 'Hello, World!';
     }
 }
