@@ -1,13 +1,5 @@
-import { ErrorInfo } from "./error-info";
-
-export enum InvocationType {
-    Data,
-    Complete,
-    Error
-}
-
-export interface Result {
-    type: InvocationType;
-    data?: any;
-    error?: ErrorInfo;
+export interface Invocation {
+    invocationId: number;
+    method: string;
+    arguments: Map<string, any>;
 }
