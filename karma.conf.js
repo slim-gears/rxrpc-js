@@ -23,7 +23,12 @@ module.exports = function(config) {
             "karma-typescript"
         ],
         reporters: ["progress", "karma-typescript"],
-        browsers: ["PhantomJS2"],
-        //browsers: ["ChromeHeadless"]
+        customLaunchers: {
+            ChromeDebugging: {
+              base: 'Chrome',
+              flags: [ '--remote-debugging-port=9333' ]
+            }
+        },
+        browsers: ["PhantomJS2"]
     });
 };

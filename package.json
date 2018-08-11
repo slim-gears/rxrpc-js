@@ -6,7 +6,9 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "karma start ./karma.conf.js --single-run"
+    "test": "karma start ./karma.conf.js --single-run",
+    "debug": "karma start ./karma.conf.js --browsers ChromeDebugging",
+    "runTest": "karma run ./karma.conf.js --browsers ChromeDebugging"
   },
   "repository": {
     "type": "git",
