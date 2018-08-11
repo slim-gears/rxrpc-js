@@ -1,12 +1,8 @@
 import {NgModule} from '@angular/core'
-import {HttpClientModule} from '@angular/common/http'
-import { RxRpcClientFactory } from './rxrpc-client.factory';
+import { RxRpcClient } from './rxrpc-client';
 
 @NgModule({
-    imports: [
-        HttpClientModule
-    ],
-    providers: [RxRpcClientFactory]
+    providers: [RxRpcClient]
 })
 export class RxRpcClientModule {
 }

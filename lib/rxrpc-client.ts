@@ -1,26 +1,24 @@
-import { Injectable } from '@angular/core'
-import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
 import { Observable, Subject, of, throwError } from 'rxjs';
-import { map, takeWhile, flatMap } from 'rxjs/operators'
+import { map, takeUntil, takeWhile, flatMap } from 'rxjs/operators'
 import { Response } from './data/response';
 import { Result } from './data/result';
 import { Invocation } from './data/invocation';
 import { ResultType } from './data/result-type';
+import { RxRpcTransport } from './rxrpc-transport';
+import { Injectable } from '@angular/core';
 
+@Injectable()
 export class RxRpcClient {
     private invocationId: number = 0;
-    private websocket: WebSocketSubject<any>;
-    private invocations: Map<number, Subject<Result>>
+    private readonly invocations = new Map<number, Subject<Result>>();
+    private readonly cancelledSubject = new Subject<boolean>();
 
-    private constructor(private url: string) {
-        this.websocket = webSocket(url);
-        this.websocket
-            .pipe(map(str => <Response>JSON.parse(str)))
-            .subscribe(this.dispatchResponse.bind(this))
-    }
-
-    public static connect(url: string): RxRpcClient {
-        return new RxRpcClient(url);
+    constructor(private readonly transport: RxRpcTransport) {
+        this.transport.messages
+            .pipe(
+                map(str => <Response>JSON.parse(str)),
+                takeUntil(this.cancelledSubject))
+            .subscribe(this.dispatchResponse.bind(this));
     }
 
     public invoke<T>(method: string, args: any): Observable<T> {
@@ -34,14 +32,14 @@ export class RxRpcClient {
         subject.subscribe = (...args) => {
             return subscribeMethod(...args).addTearDown(() => {
                 this.invocations.delete(invocation.invocationId);
-                this.websocket.next(JSON.stringify({
+                this.transport.send(JSON.stringify({
                     invocationId: invocation.invocationId
                 }));
             });
         }
 
         this.invocations.set(invocation.invocationId, subject);
-        this.websocket.next(JSON.stringify(invocation));
+        this.transport.send(JSON.stringify(invocation));
 
         return subject.pipe(
             takeWhile(res => res.type != ResultType.Complete),
