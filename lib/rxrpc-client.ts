@@ -1,11 +1,12 @@
-import { Observable, Subject, of, throwError } from 'rxjs';
-import { map, takeUntil, takeWhile, flatMap } from 'rxjs/operators'
+import {Observable, Subject, of, throwError, Operator, MonoTypeOperatorFunction, Subscriber, TeardownLogic} from 'rxjs';
+import { map, takeUntil, takeWhile, flatMap, filter } from 'rxjs/operators'
 import { Response } from './data/response';
 import { Result } from './data/result';
 import { Invocation } from './data/invocation';
 import { ResultType } from './data/result-type';
 import { RxRpcTransport } from './rxrpc-transport';
 import { Injectable } from '@angular/core';
+import { addTearDown } from './rxrpc-operators';
 
 @Injectable()
 export class RxRpcClient {
@@ -26,20 +27,21 @@ export class RxRpcClient {
             arguments: args
         }
         const subject = new Subject<Result>();
-        const subscribeMethod = subject.subscribe.bind(subject);
-        subject.subscribe = (...args) => {
-            return subscribeMethod(...args).addTearDown(() => {
-                this.invocations.delete(invocation.invocationId);
-                this.transport.send({ invocationId: invocation.invocationId });
-            });
-        }
 
         this.invocations.set(invocation.invocationId, subject);
         this.transport.send(invocation);
 
         return subject.pipe(
+            addTearDown(() => this.unsubscribe(invocation.invocationId)),
             takeWhile(res => res.type != ResultType.Complete),
-            flatMap(res => res.type === ResultType.Data ? of(<T>res.data) : throwError(res.error)));
+            flatMap(res => {
+              console.log(res);
+              return (res.type === ResultType.Data) ? of(<T>res.data) : throwError(res.error);
+            }));
+    }
+
+    private unsubscribe(invocationId: number) {
+        this.transport.send({invocationId: invocationId});
     }
 
     private dispatchResponse(response: Response) {
