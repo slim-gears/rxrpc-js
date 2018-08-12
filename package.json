@@ -1,0 +1,46 @@
+{
+  "name": "ng-rxrpc",
+  "version": "1.0.0",
+  "description": "RxRPC client library for Angular 2 and above",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "karma start ./karma.conf.js --single-run",
+    "debug": "karma start ./karma.conf.js --browsers ChromeDebugging",
+    "runTest": "karma run ./karma.conf.js --browsers ChromeDebugging"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slim-gears/rxrpc.git"
+  },
+  "keywords": [
+    "rxjs",
+    "angular",
+    "websocket",
+    "rpc"
+  ],
+  "author": "Denis Itskovich",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/slim-gears/rxrpc/issues"
+  },
+  "homepage": "https://github.com/slim-gears/rxrpc#readme",
+  "devDependencies": {
+    "@types/jasmine": "^2.8.8",
+    "babel-polyfill": "^6.26.0",
+    "jasmine": "^3.2.0",
+    "karma": "^3.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-cli": "^1.0.1",
+    "karma-jasmine": "^1.1.2",
+    "karma-phantomjs2-launcher": "^0.5.0",
+    "karma-typescript": "^3.0.13",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@angular/common": "^6.1.2",
+    "@angular/core": "^6.1.2",
+    "rxjs": "^6.2.2"
+  }
+}
