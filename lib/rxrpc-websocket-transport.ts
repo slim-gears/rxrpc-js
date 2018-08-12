@@ -1,7 +1,7 @@
 import { RxRpcTransport } from "./rxrpc-transport";
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
 
-export class RxRpcWebSocketTransport implements RxRpcTransport {
+export class RxRpcWebSocketTransport extends RxRpcTransport {
     private webSocket: WebSocketSubject<string>;
 
     get messages() {
@@ -9,6 +9,7 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
     }
 
     constructor(url: string) {
+        super();
         this.webSocket = webSocket(url);
     }
 

@@ -1,6 +1,6 @@
 import { Observable } from "rxjs";
 
-export interface RxRpcTransport {
+export abstract class RxRpcTransport {
     readonly messages: Observable<string>;
-    send(msg: string);
+    abstract send(msg: string);
 }
