@@ -6,7 +6,7 @@ import { Result } from './data/result';
 import { Invocation } from './data/invocation';
 
 describe("RxRpc Client test suite", function() {
-    let sentMessages: string[];
+    let sentMessages: any[];
     let transport: RxRpcTransport;
     let client: RxRpcClient;
 
@@ -22,7 +22,7 @@ describe("RxRpc Client test suite", function() {
     it("Method invocation sends message", () => {
         client.invoke('testMethod', {arg1: 1, arg2: "2"});
         expect(sentMessages.length).toEqual(1);
-        const invocation = <Invocation>JSON.parse(sentMessages[0]);
+        const invocation = <Invocation>sentMessages[0];
         expect(invocation.method).toEqual('testMethod');
         expect(invocation.invocationId).toEqual(1);
         expect(invocation.arguments['arg1']).toEqual(1);

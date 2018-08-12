@@ -15,9 +15,7 @@ export class RxRpcClient {
 
     constructor(private readonly transport: RxRpcTransport) {
         this.transport.messages
-            .pipe(
-                map(str => <Response>JSON.parse(str)),
-                takeUntil(this.cancelledSubject))
+            .pipe(takeUntil(this.cancelledSubject))
             .subscribe(this.dispatchResponse.bind(this));
     }
 
@@ -32,14 +30,12 @@ export class RxRpcClient {
         subject.subscribe = (...args) => {
             return subscribeMethod(...args).addTearDown(() => {
                 this.invocations.delete(invocation.invocationId);
-                this.transport.send(JSON.stringify({
-                    invocationId: invocation.invocationId
-                }));
+                this.transport.send({ invocationId: invocation.invocationId });
             });
         }
 
         this.invocations.set(invocation.invocationId, subject);
-        this.transport.send(JSON.stringify(invocation));
+        this.transport.send(invocation);
 
         return subject.pipe(
             takeWhile(res => res.type != ResultType.Complete),

@@ -1,5 +1,5 @@
 export enum ResultType {
-    Data,
-    Complete,
-    Error
+    Data = 'Data',
+    Complete = 'Complete',
+    Error = 'Error'
 }

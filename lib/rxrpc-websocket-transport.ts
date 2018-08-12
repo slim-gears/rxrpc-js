@@ -1,10 +1,11 @@
 import { RxRpcTransport } from "./rxrpc-transport";
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
+import {Observable} from 'rxjs';
 
 export class RxRpcWebSocketTransport extends RxRpcTransport {
-    private webSocket: WebSocketSubject<string>;
+    private webSocket: WebSocketSubject<any>;
 
-    get messages() {
+    get messages(): Observable<any> {
         return this.webSocket;
     }
 
@@ -13,7 +14,7 @@ export class RxRpcWebSocketTransport extends RxRpcTransport {
         this.webSocket = webSocket(url);
     }
 
-    send(msg: string) {
+    send(msg: any) {
         this.webSocket.next(msg);
     }
 }
