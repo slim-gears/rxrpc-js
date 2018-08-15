@@ -1,7 +1,7 @@
 {
   "name": "ng-rxrpc",
   "version": "1.0.0",
-  "description": "RxRPC client library for Angular 2 and above",
+  "description": "RxRPC client library for Angular 6",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
