@@ -17,7 +17,6 @@ module.exports = function(config) {
             tsconfig: "./tsconfig.json",
         },
         plugins: [
-            "karma-phantomjs-launcher",
             "karma-chrome-launcher",
             "karma-jasmine",
             "karma-typescript"
@@ -29,6 +28,6 @@ module.exports = function(config) {
               flags: [ '--remote-debugging-port=9333' ]
             }
         },
-        browsers: ["PhantomJS"]
+        browsers: ["ChromeHeadless"]
     });
 };
