@@ -1,5 +1,5 @@
-import {Observable, Subject, of, throwError, Operator, MonoTypeOperatorFunction, Subscriber, TeardownLogic} from 'rxjs';
-import { map, takeUntil, takeWhile, flatMap, filter } from 'rxjs/operators'
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { takeUntil, takeWhile, flatMap } from 'rxjs/operators'
 import { Response } from './data/response';
 import { Result } from './data/result';
 import { Invocation } from './data/invocation';

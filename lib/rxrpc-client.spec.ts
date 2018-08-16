@@ -1,8 +1,6 @@
-import {} from 'jasmine'
-import {RxRpcTransport} from './rxrpc-transport'
-import {Observable, of} from 'rxjs'
+import { RxRpcTransport } from './rxrpc-transport'
+import { of } from 'rxjs'
 import { RxRpcClient } from './rxrpc-client';
-import { Result } from './data/result';
 import { Invocation } from './data/invocation';
 
 describe("RxRpc Client test suite", function() {
@@ -17,7 +15,7 @@ describe("RxRpc Client test suite", function() {
             send: sentMessages.push.bind(sentMessages)
         };
         client = new RxRpcClient(transport);
-    })
+    });
 
     it("Method invocation sends message", () => {
         client.invoke('testMethod', {arg1: 1, arg2: "2"});

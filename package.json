@@ -1,9 +1,9 @@
 {
   "name": "ng-rxrpc",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "RxRPC client library for Angular 6",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "karma start ./karma.conf.js --single-run",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slim-gears/rxrpc.git"
+    "url": "git+https://github.com/slim-gears/ng-rxrpc.git"
   },
   "keywords": [
     "rxjs",
@@ -23,9 +23,9 @@
   "author": "Denis Itskovich",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/slim-gears/rxrpc/issues"
+    "url": "https://github.com/slim-gears/ng-rxrpc/issues"
   },
-  "homepage": "https://github.com/slim-gears/rxrpc#readme",
+  "homepage": "https://github.com/slim-gears/ng-rxrpc#readme",
   "devDependencies": {
     "@types/jasmine": "^2.8.8",
     "babel-polyfill": "^6.26.0",
