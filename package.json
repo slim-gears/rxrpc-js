@@ -28,6 +28,7 @@
   "homepage": "https://github.com/slim-gears/ng-rxrpc#readme",
   "devDependencies": {
     "@types/jasmine": "^2.8.8",
+    "babel-polyfill": "^6.26.0",
     "jasmine": "^3.2.0",
     "karma": "^3.0.0",
     "karma-chrome-launcher": "^2.2.0",

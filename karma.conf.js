@@ -2,6 +2,7 @@ module.exports = function(config) {
     config.set({
         frameworks: ["jasmine", "karma-typescript"],
         files: [
+            "node_modules/babel-polyfill/dist/polyfill.js",
             "index.ts",
             "lib/**/*.ts"
         ],
@@ -16,6 +17,7 @@ module.exports = function(config) {
             tsconfig: "./tsconfig.json",
         },
         plugins: [
+            "karma-phantomjs-launcher",
             "karma-chrome-launcher",
             "karma-jasmine",
             "karma-typescript"
@@ -27,6 +29,6 @@ module.exports = function(config) {
               flags: [ '--remote-debugging-port=9333' ]
             }
         },
-        browsers: ["ChromeHeadless"]
+        browsers: ["PhantomJS"]
     });
 };
