@@ -1,14 +1,14 @@
-import {Observable, Subject, of, throwError, interval, defer} from 'rxjs';
-import { takeUntil, takeWhile, flatMap } from 'rxjs/operators'
-import { Response } from './data/response';
-import { Result } from './data/result';
-import { Invocation, Invocations } from './data/invocation';
-import { ResultType } from './data/result-type';
-import { RxRpcTransport } from './rxrpc-transport';
-import { Injectable } from '@angular/core';
-import { addTearDown } from './rxrpc-operators';
+import {defer, interval, Observable, of, Subject, throwError} from 'rxjs';
+import {flatMap, takeUntil, takeWhile} from 'rxjs/operators'
+import {Response} from './data/response';
+import {Result} from './data/result';
+import {Invocation, Invocations} from './data/invocation';
+import {ResultType} from './data/result-type';
+import {RxRpcTransport} from './rxrpc-transport';
+import {Injectable, Optional} from '@angular/core';
+import {addTearDown} from './rxrpc-operators';
 
-export interface RxRpcClientOptions {
+export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
 }
 
@@ -23,7 +23,7 @@ export class RxRpcClient {
     private readonly invocations = new Map<number, Subject<Result>>();
     private readonly cancelledSubject = new Subject();
 
-    constructor(private readonly transport: RxRpcTransport, options?: RxRpcClientOptions) {
+    constructor(private readonly transport: RxRpcTransport, @Optional() options?: RxRpcClientOptions) {
         this.options = {...RxRpcClient.defaultOptions, ...options};
         this.transport.messages
             .pipe(takeUntil(this.cancelledSubject))

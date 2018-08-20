@@ -1,5 +1,5 @@
 import {NgModule} from '@angular/core'
-import { RxRpcClient } from './rxrpc-client';
+import {RxRpcClient} from './rxrpc-client';
 
 @NgModule({
     providers: [RxRpcClient]
