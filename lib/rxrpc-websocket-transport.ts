@@ -3,7 +3,7 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
 import {Observable} from 'rxjs';
 
 export class RxRpcWebSocketTransport extends RxRpcTransport {
-    private webSocket: WebSocketSubject<any>;
+    private readonly webSocket: WebSocketSubject<any>;
 
     get messages(): Observable<any> {
         return this.webSocket;
@@ -16,5 +16,9 @@ export class RxRpcWebSocketTransport extends RxRpcTransport {
 
     send(msg: any) {
         this.webSocket.next(msg);
+    }
+
+    close() {
+        this.webSocket.complete();
     }
 }

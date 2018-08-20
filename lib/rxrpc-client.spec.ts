@@ -7,12 +7,15 @@ describe('RxRpc Client test suite', function() {
     let sentMessages: any[];
     let transport: RxRpcTransport;
     let client: RxRpcClient;
+    let closedCalled;
 
     beforeEach(() => {
         sentMessages = [];
+        closedCalled = false;
         transport = {
             messages: of(),
-            send: sentMessages.push.bind(sentMessages)
+            send: sentMessages.push.bind(sentMessages),
+            close: () => {closedCalled = true;}
         };
         client = new RxRpcClient(transport);
     });
@@ -44,4 +47,9 @@ describe('RxRpc Client test suite', function() {
         const unsubscriptionInvocation = <Unsubscription>sentMessages[1];
         expect(unsubscriptionInvocation.invocationId).toEqual(1);
     });
+
+    it('Client closes transport', () => {
+        client.close();
+        expect(closedCalled).toBe(true);
+    })
 });

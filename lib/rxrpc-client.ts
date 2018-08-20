@@ -52,6 +52,7 @@ export class RxRpcClient {
 
     public close() {
         this.cancelledSubject.next();
+        this.transport.close();
     }
 
     private unsubscribe(invocationId: number) {
