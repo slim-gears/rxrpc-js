@@ -46,7 +46,7 @@
   "files": [
     "dist/**/*",
     "*.ts",
-    "lib/**/*",
+    "src/lib/**/*",
     "*.json",
     "LICENSE",
     "karma.conf.js"

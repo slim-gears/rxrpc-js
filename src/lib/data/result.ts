@@ -1,5 +1,5 @@
-import { ResultType } from "./result-type";
-import { ErrorInfo } from "./error-info";
+import {ResultType} from './result-type';
+import {ErrorInfo} from './error-info';
 
 export interface Result {
     type: ResultType;

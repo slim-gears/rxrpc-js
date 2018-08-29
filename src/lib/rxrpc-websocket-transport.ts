@@ -1,5 +1,5 @@
-import { RxRpcTransport } from "./rxrpc-transport";
-import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
+import {RxRpcTransport} from './rxrpc-transport';
+import {webSocket, WebSocketSubject} from 'rxjs/webSocket'
 import {Observable} from 'rxjs';
 
 export class RxRpcWebSocketTransport extends RxRpcTransport {

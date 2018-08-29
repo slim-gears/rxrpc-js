@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import {Observable} from 'rxjs';
 
 export abstract class RxRpcTransport {
     abstract readonly messages: Observable<any>;

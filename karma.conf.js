@@ -3,12 +3,12 @@ module.exports = function(config) {
         frameworks: ["jasmine", "karma-typescript"],
         files: [
             "node_modules/babel-polyfill/dist/polyfill.js",
-            "index.ts",
-            "lib/**/*.ts"
+            "src/index.ts",
+            "src/lib/**/*.ts"
         ],
         preprocessors: {
-            "index.ts": "karma-typescript",
-            "lib/**/*.ts": "karma-typescript"
+            "src/index.ts": "karma-typescript",
+            "src/lib/**/*.ts": "karma-typescript"
         },
         karmaTypescriptConfig: {
             compilerOptions: {
