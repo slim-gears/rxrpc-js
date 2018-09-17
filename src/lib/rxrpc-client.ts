@@ -7,13 +7,14 @@ import {ResultType} from './data/result-type';
 import {RxRpcTransport} from './rxrpc-transport';
 import {Injectable, Optional} from '@angular/core';
 import {addTearDown} from './rxrpc-operators';
+import {RxRpcInvoker} from './rxrpc-invoker';
 
 export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
 }
 
 @Injectable()
-export class RxRpcClient {
+export class RxRpcClient extends RxRpcInvoker {
     private static defaultOptions: RxRpcClientOptions = {
         keepAlivePeriodMillis: 60000
     };
@@ -24,6 +25,7 @@ export class RxRpcClient {
     private readonly cancelledSubject = new Subject();
 
     constructor(private readonly transport: RxRpcTransport, @Optional() options?: RxRpcClientOptions) {
+        super();
         this.options = {...RxRpcClient.defaultOptions, ...options};
         this.transport.messages
             .pipe(takeUntil(this.cancelledSubject))
