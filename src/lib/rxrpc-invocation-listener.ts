@@ -1,5 +1,5 @@
 import {Invocation} from './data/invocation';
-import {Result} from './data/result';
+import {Response} from './data/response';
 
 export interface RxRpcInvocationListenerSubscription {
     unsubscribe();
@@ -7,5 +7,5 @@ export interface RxRpcInvocationListenerSubscription {
 
 export interface RxRpcInvocationListener {
     onInvocation(invocation: Invocation)
-    onResponse(response: Result);
+    onResponse(response: Response);
 }

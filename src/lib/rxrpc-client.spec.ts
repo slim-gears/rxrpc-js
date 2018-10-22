@@ -2,7 +2,7 @@ import {RxRpcTransport} from './rxrpc-transport'
 import {of} from 'rxjs'
 import {RxRpcClient} from './rxrpc-client';
 import {Invocation, Subscription, Unsubscription} from './data/invocation';
-import {Result} from './data/result';
+import {Response} from './data/response';
 
 describe('RxRpc Client test suite', function() {
     let sentMessages: any[];
@@ -56,10 +56,10 @@ describe('RxRpc Client test suite', function() {
 
     it('Listener is invoked', () => {
         const invocations: Invocation[] = [];
-        const results: Result[] = [];
+        const responses: Response[] = [];
         const listenerSubscription = client.addListener({
             onInvocation: invocations.push.bind(invocations),
-            onResponse: results.push.bind(results)
+            onResponse: responses.push.bind(responses)
         });
 
         var observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});

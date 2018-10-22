@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, Subject, throwError} from 'rxjs';
-import {flatMap, takeUntil, takeWhile, tap} from 'rxjs/operators'
+import {flatMap, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -47,7 +47,6 @@ export class RxRpcClient extends RxRpcInvoker {
             const invocation: Invocation = Invocations.subscription(++this.invocationId, method, args);
             const subject = new Subject<Result>();
             const observable =  subject.pipe(
-                tap(res => this.listeners.forEach(l => l.onResponse(res))),
                 takeWhile(res => res.type != ResultType.Complete),
                 flatMap(res => {
                     return (res.type === ResultType.Data) ? of(<T>res.data) : throwError(res.error);
@@ -79,6 +78,7 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     private dispatchResponse(response: Response) {
+        this.listeners.forEach(l => l.onResponse(response));
         this.invocations
             .get(response.invocationId)
             .next(response.result);
