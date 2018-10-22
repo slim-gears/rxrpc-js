@@ -1,7 +1,8 @@
 import {RxRpcTransport} from './rxrpc-transport'
 import {of} from 'rxjs'
 import {RxRpcClient} from './rxrpc-client';
-import {Subscription, Unsubscription} from './data/invocation';
+import {Invocation, Subscription, Unsubscription} from './data/invocation';
+import {Result} from './data/result';
 
 describe('RxRpc Client test suite', function() {
     let sentMessages: any[];
@@ -51,5 +52,28 @@ describe('RxRpc Client test suite', function() {
     it('Client closes transport', () => {
         client.close();
         expect(closedCalled).toBe(true);
+    })
+
+    it('Listener is invoked', () => {
+        const invocations: Invocation[] = [];
+        const results: Result[] = [];
+        const listenerSubscription = client.addListener({
+            onInvocation: invocations.push.bind(invocations),
+            onResponse: results.push.bind(results)
+        });
+
+        var observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
+        var observableSubscription = observable.subscribe();
+        expect(invocations.length).toEqual(1);
+        observableSubscription.unsubscribe();
+
+        expect(invocations.length).toEqual(2);
+        observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
+        observableSubscription = observable.subscribe();
+        expect(invocations.length).toEqual(3);
+
+        listenerSubscription.unsubscribe();
+        observableSubscription.unsubscribe();
+        expect(invocations.length).toEqual(3);
     })
 });

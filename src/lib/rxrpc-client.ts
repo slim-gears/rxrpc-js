@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, Subject, throwError} from 'rxjs';
-import {flatMap, takeUntil, takeWhile} from 'rxjs/operators'
+import {flatMap, takeUntil, takeWhile, tap} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -8,6 +8,7 @@ import {RxRpcTransport} from './rxrpc-transport';
 import {Injectable, Optional} from '@angular/core';
 import {addTearDown} from './rxrpc-operators';
 import {RxRpcInvoker} from './rxrpc-invoker';
+import {RxRpcInvocationListener, RxRpcInvocationListenerSubscription} from './rxrpc-invocation-listener';
 
 export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
@@ -23,6 +24,7 @@ export class RxRpcClient extends RxRpcInvoker {
     private readonly options: RxRpcClientOptions;
     private readonly invocations = new Map<number, Subject<Result>>();
     private readonly cancelledSubject = new Subject();
+    private listeners: RxRpcInvocationListener[] = [];
 
     constructor(private readonly transport: RxRpcTransport, @Optional() options?: RxRpcClientOptions) {
         super();
@@ -35,20 +37,26 @@ export class RxRpcClient extends RxRpcInvoker {
             .subscribe(() => this.sendKeepAlive());
     }
 
+    public addListener(listener: RxRpcInvocationListener): RxRpcInvocationListenerSubscription {
+        this.listeners.push(listener);
+        return { unsubscribe: () => this.listeners = this.listeners.filter(l => l != listener) };
+    }
+
     public invoke<T>(method: string, args: any): Observable<T> {
         return defer(() => {
             const invocation: Invocation = Invocations.subscription(++this.invocationId, method, args);
             const subject = new Subject<Result>();
-            this.invocations.set(invocation.invocationId, subject);
-            this.transport.send(invocation);
-
-            return subject.pipe(
+            const observable =  subject.pipe(
+                tap(res => this.listeners.forEach(l => l.onResponse(res))),
                 takeWhile(res => res.type != ResultType.Complete),
                 flatMap(res => {
-                    console.log(res);
                     return (res.type === ResultType.Data) ? of(<T>res.data) : throwError(res.error);
                 }),
                 addTearDown(() => this.unsubscribe(invocation.invocationId)));
+
+            this.invocations.set(invocation.invocationId, subject);
+            this.send(invocation);
+            return observable;
         })
     }
 
@@ -57,12 +65,17 @@ export class RxRpcClient extends RxRpcInvoker {
         this.transport.close();
     }
 
+    private send(invocation: Invocation) {
+        this.listeners.forEach(l => l.onInvocation(invocation));
+        this.transport.send(invocation);
+    }
+
     private unsubscribe(invocationId: number) {
-        this.transport.send(Invocations.unsubscription(invocationId));
+        this.send(Invocations.unsubscription(invocationId));
     }
 
     private sendKeepAlive() {
-        this.transport.send(Invocations.keepAlive());
+        this.send(Invocations.keepAlive());
     }
 
     private dispatchResponse(response: Response) {
