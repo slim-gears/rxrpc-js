@@ -13,7 +13,7 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
 
     connect(): Observable<RxRpcConnection> {
         return Observable.create(observer => {
-            const ws = webSocket(this.config);
+            const ws = webSocket(this.getConfig());
             observer.next({
                 messages: ws,
                 send: msg => ws.next(msg),
@@ -21,5 +21,9 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
             });
             observer.complete();
         });
+    }
+
+    protected getConfig(): WebSocketSubjectConfig<any> {
+        return {...this.config};
     }
 }
