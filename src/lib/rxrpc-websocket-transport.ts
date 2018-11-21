@@ -1,6 +1,7 @@
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
 import {webSocket, WebSocketSubjectConfig} from 'rxjs/webSocket'
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
+import {map, take} from 'rxjs/operators';
 
 export class RxRpcWebSocketTransport implements RxRpcTransport {
     private readonly config: WebSocketSubjectConfig<any>;
@@ -12,18 +13,19 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
     }
 
     connect(): Observable<RxRpcConnection> {
-        return Observable.create(observer => {
-            const ws = webSocket(this.getConfig());
-            observer.next({
-                messages: ws,
-                send: msg => ws.next(msg),
-                close: () => ws.complete()
-            });
-            observer.complete();
-        });
+        return this.getConfig().pipe(
+            take(1),
+            map(config => {
+                const ws = webSocket(config);
+                return <RxRpcConnection>{
+                    messages: ws,
+                    send: msg => ws.next(msg),
+                    close: () => ws.complete()
+                }
+            }));
     }
 
-    protected getConfig(): WebSocketSubjectConfig<any> {
-        return {...this.config};
+    protected getConfig(): Observable<WebSocketSubjectConfig<any>> {
+        return of({...this.config});
     }
 }
