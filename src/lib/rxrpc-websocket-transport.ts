@@ -1,24 +1,20 @@
-import {RxRpcTransport} from './rxrpc-transport';
-import {webSocket, WebSocketSubject} from 'rxjs/webSocket'
+import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
+import {webSocket} from 'rxjs/webSocket'
 import {Observable} from 'rxjs';
 
 export class RxRpcWebSocketTransport extends RxRpcTransport {
-    private readonly webSocket: WebSocketSubject<any>;
-
-    get messages(): Observable<any> {
-        return this.webSocket;
-    }
-
-    constructor(url: string) {
+    constructor(private readonly url: string) {
         super();
-        this.webSocket = webSocket(url);
     }
 
-    send(msg: any) {
-        this.webSocket.next(msg);
-    }
-
-    close() {
-        this.webSocket.complete();
+    connect(): Observable<RxRpcConnection> {
+        return Observable.create(observer => {
+            const ws = webSocket(this.url);
+            observer.next({
+                messages: ws,
+                send: msg => ws.next(msg),
+                close: () => ws.complete()
+            })
+        });
     }
 }

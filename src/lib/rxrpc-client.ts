@@ -4,7 +4,7 @@ import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
 import {ResultType} from './data/result-type';
-import {RxRpcTransport} from './rxrpc-transport';
+import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
 import {Injectable, Optional} from '@angular/core';
 import {addTearDown} from './rxrpc-operators';
 import {RxRpcInvoker} from './rxrpc-invoker';
@@ -24,17 +24,28 @@ export class RxRpcClient extends RxRpcInvoker {
     private readonly options: RxRpcClientOptions;
     private readonly invocations = new Map<number, Subject<Result>>();
     private readonly cancelledSubject = new Subject();
+    private readonly connectionObservable: Observable<RxRpcConnection>;
     private listeners: RxRpcInvocationListener[] = [];
+    private currentConnection: RxRpcConnection;
 
     constructor(private readonly transport: RxRpcTransport, @Optional() options?: RxRpcClientOptions) {
         super();
         this.options = {...RxRpcClient.defaultOptions, ...options};
-        this.transport.messages
-            .pipe(takeUntil(this.cancelledSubject))
-            .subscribe(this.dispatchResponse.bind(this));
-        interval(this.options.keepAlivePeriodMillis)
-            .pipe(takeUntil(this.cancelledSubject))
-            .subscribe(() => this.sendKeepAlive());
+
+        const self = this;
+        this.connectionObservable = Observable
+            .create(observer => {
+                if (self.currentConnection) {
+                    observer.next(self.currentConnection);
+                    observer.complete();
+                } else {
+                    this.transport.connect().subscribe(connection => {
+                        self.onConnected(connection);
+                        observer.next(connection);
+                        observer.complete();
+                    })
+                }
+            });
     }
 
     public addListener(listener: RxRpcInvocationListener): RxRpcInvocationListenerSubscription {
@@ -60,13 +71,21 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     public close() {
-        this.cancelledSubject.next();
-        this.transport.close();
+        if (this.isConnected()) {
+            this.currentConnection.close();
+            this.onDisconnected();
+        }
+    }
+
+    private isConnected(): boolean {
+        return this.currentConnection && this.currentConnection != null;
     }
 
     private send(invocation: Invocation) {
-        this.listeners.forEach(l => l.onInvocation(invocation));
-        this.transport.send(invocation);
+        this.connectionObservable.subscribe(connection => {
+            this.listeners.forEach(l => l.onInvocation(invocation));
+            connection.send(invocation);
+        });
     }
 
     private unsubscribe(invocationId: number) {
@@ -75,6 +94,23 @@ export class RxRpcClient extends RxRpcInvoker {
 
     private sendKeepAlive() {
         this.send(Invocations.keepAlive());
+    }
+
+    private onConnected(connection: RxRpcConnection) {
+        this.currentConnection = connection;
+        this.currentConnection.messages
+            .pipe(takeUntil(this.cancelledSubject))
+            .subscribe(this.dispatchResponse.bind(this),
+                this.onDisconnected.bind(this),
+                this.onDisconnected.bind(this));
+        interval(this.options.keepAlivePeriodMillis)
+            .pipe(takeUntil(this.cancelledSubject))
+            .subscribe(() => this.sendKeepAlive());
+    }
+
+    private onDisconnected() {
+        this.cancelledSubject.next();
+        this.currentConnection = null;
     }
 
     private dispatchResponse(response: Response) {
