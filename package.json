@@ -39,8 +39,6 @@
     "typescript": "^3.0.1"
   },
   "dependencies": {
-    "@angular/common": "^6.1.2",
-    "@angular/core": "^6.1.2",
     "rxjs": "^6.2.2"
   },
   "files": [
