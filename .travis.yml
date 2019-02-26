@@ -9,8 +9,9 @@ script:
 deploy:
   skip_cleanup: true
   provider: script
-  script: "source ./deploy.sh"
-  branch: master
+  script: "bash ./deploy.sh $TRAVIS_TAG"
+  on:
+    tags: true
 env:
   global:
   - secure: YyNeuw9xZfnQo36c/TWDuMBkOURebUGgcH0x/2/QIOIA7zfLmU9I2JMNt1VxzZqeV0XUA9/vJVHoxk5uXRaPCIPRacILXqNwTjFpxKb6T9jbInR2ZeRUXvr57SduaIoyvVqX5sbBcu9ROPCw2qxdRcNrHjADJUYDu65LNfxT28vVxvIvAqDuTUiJHKAQI4TF5YiGKi0ay0sGLZvGT1gyaMG5BDtfnVsopX7325ModKcd0kW5f6JbEfl5h+J9MKQl/2ZsCm7cNt4qhcmZC2BpmgL6KPzPw4nB6hDnTr+rx7lhECbdRmS5h2PHH/v2oOyu1z5VFXCvw3Kwy226Px5E5SN5bh5x804A5c7UHpnburyAEzhcgBaNswuyiXw3m6YalNgWl7mtfesW01WRr69GOK5cwYsIJ6V2rzH0pQU4g4lSLsAypJ/4KAtjp/3F/++rs4PkyBy+t1x0BB2FfhV5ReM8E1LQeaZeC4aZYf8qfVHJLnJs6TmnmPAW0abw/WvIFAw9hK2ymEEoOR6cv6Fg66Rs3zhkb+VE/a6e84vpI+6F1wgjmIoqrUdJJIus1TPoicj+DE8ud3HanHgrD5V/wNeW5hglDoQJPycf9a4PCObffwzDEgztdQ+7mKopfXG4EmPU0dqVeq/ah7MLF5Hf07D7pbpEMAk0A/vU6DaXBic=
