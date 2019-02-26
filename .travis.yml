@@ -7,6 +7,7 @@ script:
 - npm run build
 - npm run test
 deploy:
+  skip_cleanup: true
   provider: script
   script: source deploy.sh
   branch: master
