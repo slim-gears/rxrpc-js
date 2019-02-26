@@ -13,7 +13,6 @@ export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
 }
 
-//@Injectable()
 export class RxRpcClient extends RxRpcInvoker {
     private static defaultOptions: RxRpcClientOptions = {
         keepAlivePeriodMillis: 60000
