@@ -5,7 +5,6 @@ import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
 import {ResultType} from './data/result-type';
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
-import {Injectable, Optional} from '@angular/core';
 import {addTearDown} from './rxrpc-operators';
 import {RxRpcInvoker} from './rxrpc-invoker';
 import {RxRpcInvocationListener, RxRpcInvocationListenerSubscription} from './rxrpc-invocation-listener';
@@ -14,7 +13,6 @@ export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
 }
 
-@Injectable()
 export class RxRpcClient extends RxRpcInvoker {
     private static defaultOptions: RxRpcClientOptions = {
         keepAlivePeriodMillis: 60000
@@ -28,7 +26,7 @@ export class RxRpcClient extends RxRpcInvoker {
     private listeners: RxRpcInvocationListener[] = [];
     private currentConnection: RxRpcConnection;
 
-    constructor(private readonly transport: RxRpcTransport, @Optional() options?: RxRpcClientOptions) {
+    constructor(private readonly transport: RxRpcTransport, options?: RxRpcClientOptions) {
         super();
         this.options = {...RxRpcClient.defaultOptions, ...options};
 
