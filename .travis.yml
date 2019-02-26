@@ -9,7 +9,7 @@ script:
 deploy:
   skip_cleanup: true
   provider: script
-  script: source deploy.sh
+  script: "source ./deploy.sh"
   branch: master
 env:
   global:
