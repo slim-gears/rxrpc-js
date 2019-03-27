@@ -16,11 +16,14 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
         return this.getConfig().pipe(
             take(1),
             map(config => {
+
                 const ws = webSocket(config);
+
                 return <RxRpcConnection>{
                     messages: ws,
                     send: msg => ws.next(msg),
-                    close: () => ws.complete()
+                    close: () => ws.complete(),
+                    error: error => ws.error(error)
                 }
             }));
     }

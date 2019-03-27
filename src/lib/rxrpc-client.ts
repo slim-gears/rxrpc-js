@@ -37,11 +37,15 @@ export class RxRpcClient extends RxRpcInvoker {
                     observer.next(self.currentConnection);
                     observer.complete();
                 } else {
-                    this.transport.connect().subscribe(connection => {
-                        self.onConnected(connection);
-                        observer.next(connection);
-                        observer.complete();
-                    })
+                    self.transport.connect()
+                        .subscribe(
+                            connection => {
+                                self.onConnected(connection);
+                                observer.next(connection);
+                                observer.complete();
+                                },
+                            error => observer.error(error),
+                            () => observer.complete());
                 }
             });
     }
@@ -65,7 +69,7 @@ export class RxRpcClient extends RxRpcInvoker {
             this.invocations.set(invocation.invocationId, subject);
             this.send(invocation);
             return observable;
-        })
+        });
     }
 
     public close() {
@@ -83,6 +87,9 @@ export class RxRpcClient extends RxRpcInvoker {
         this.connectionObservable.subscribe(connection => {
             this.listeners.forEach(l => l.onInvocation(invocation));
             connection.send(invocation);
+        }, error => {
+            this.currentConnection.error(error);
+            this.close();
         });
     }
 
@@ -98,15 +105,20 @@ export class RxRpcClient extends RxRpcInvoker {
         this.currentConnection = connection;
         this.currentConnection.messages
             .pipe(takeUntil(this.cancelledSubject))
-            .subscribe(this.dispatchResponse.bind(this),
-                this.onDisconnected.bind(this),
-                this.onDisconnected.bind(this));
+            .subscribe(
+                msg => this.dispatchResponse(msg),
+                error => this.onDisconnected(error),
+                () => this.onDisconnected());
         interval(this.options.keepAlivePeriodMillis)
             .pipe(takeUntil(this.cancelledSubject))
             .subscribe(() => this.sendKeepAlive());
     }
 
-    private onDisconnected() {
+    private onDisconnected(error: any = null) {
+        this.invocations.forEach(invocation => error
+            ? invocation.error(error)
+            : invocation.complete());
+        this.invocations.clear();
         this.cancelledSubject.next();
         this.currentConnection = null;
     }

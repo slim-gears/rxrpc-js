@@ -1,4 +1,4 @@
-import {RxRpcTransport} from './rxrpc-transport'
+import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport'
 import {of, Subject} from 'rxjs'
 import {RxRpcClient} from './rxrpc-client';
 import {Invocation, Subscription, Unsubscription} from './data/invocation';
@@ -10,18 +10,21 @@ describe('RxRpc Client test suite', function() {
     let client: RxRpcClient;
     let closedCalled;
     let messageSubject;
+    let errors: any[];
+    let connection: RxRpcConnection;
 
     beforeEach(() => {
         messageSubject = new Subject();
         sentMessages = [];
         closedCalled = false;
-        transport = {
-            connect: () => of({
-                messages: messageSubject,
-                send: sentMessages.push.bind(sentMessages),
-                close: () => {closedCalled = true;}
-            })
+        connection = {
+            messages: messageSubject,
+            send: msg => sentMessages.push(msg),
+            close: () => {closedCalled = true;},
+            error: error => { messageSubject.error(error); errors.push(error); }
         };
+
+        transport = { connect: () => of(connection) };
         client = new RxRpcClient(transport);
     });
 
@@ -81,5 +84,14 @@ describe('RxRpc Client test suite', function() {
         listenerSubscription.unsubscribe();
         observableSubscription.unsubscribe();
         expect(invocations.length).toEqual(3);
+    });
+
+    it('On error - report to all subscribers', () => {
+        messageSubject.error(new Error("Connection error"));
+        const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
+        let receivedErrors = [];
+        observable.subscribe(() => {}, error => receivedErrors.push(error));
+        expect(receivedErrors.length).toEqual(1);
+        expect(receivedErrors[0].message).toEqual("Connection error");
     })
 });
