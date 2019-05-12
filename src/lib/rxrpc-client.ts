@@ -1,16 +1,20 @@
-import {defer, interval, Observable, of, Subject, throwError} from 'rxjs';
-import {flatMap, takeUntil, takeWhile} from 'rxjs/operators'
+import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
+import {finalize, flatMap, share, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
 import {ResultType} from './data/result-type';
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
-import {addTearDown} from './rxrpc-operators';
 import {RxRpcInvoker} from './rxrpc-invoker';
 import {RxRpcInvocationListener, RxRpcInvocationListenerSubscription} from './rxrpc-invocation-listener';
 
 export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
+}
+
+class InternalSubscription {
+    method: string;
+    args: any;
 }
 
 export class RxRpcClient extends RxRpcInvoker {
@@ -25,6 +29,7 @@ export class RxRpcClient extends RxRpcInvoker {
     private readonly connectionObservable: Observable<RxRpcConnection>;
     private listeners: RxRpcInvocationListener[] = [];
     private currentConnection: RxRpcConnection;
+    private readonly sharedInvocations = new Map<string, Observable<Result>>();
 
     constructor(private readonly transport: RxRpcTransport, options?: RxRpcClientOptions) {
         super();
@@ -56,20 +61,49 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     public invoke<T>(method: string, args: any): Observable<T> {
+        return this
+            .invokeInternal({method: method, args: args})
+            .pipe(RxRpcClient.toObjects<T>());
+    }
+
+    public invokeShared<T>(method: string, args: any): Observable<T> {
+        const subscription: InternalSubscription = {method: method, args: args};
+        const key = RxRpcClient.sharedInvocationKey(subscription);
+        const observable: Observable<Result> = this.sharedInvocations.get(key) || this.addShared(key, subscription);
+        return observable.pipe(RxRpcClient.toObjects<T>());
+    }
+
+    private static toObjects<T>(): OperatorFunction<Result, T> {
+        return (source: Observable<Result>) => source.pipe(flatMap(res => {
+            return (res.type === ResultType.Data) ? of(<T>res.data) : throwError(res.error);
+        }));
+    }
+
+    private addShared(key: string, subscription: InternalSubscription): Observable<Result> {
+        const observable = this.invokeInternal(subscription)
+            .pipe(
+                finalize(() => this.sharedInvocations.delete(key)),
+                share());
+        this.sharedInvocations.set(key, observable);
+        return observable;
+    }
+
+    private invokeInternal(subscription: InternalSubscription): Observable<Result> {
         return defer(() => {
-            const invocation: Invocation = Invocations.subscription(++this.invocationId, method, args);
+            const invocation: Invocation = Invocations.subscription(++this.invocationId, subscription.method, subscription.args);
             const subject = new Subject<Result>();
             const observable =  subject.pipe(
                 takeWhile(res => res.type != ResultType.Complete),
-                flatMap(res => {
-                    return (res.type === ResultType.Data) ? of(<T>res.data) : throwError(res.error);
-                }),
-                addTearDown(() => this.unsubscribe(invocation.invocationId)));
+                finalize(() => this.unsubscribe(invocation.invocationId)));
 
             this.invocations.set(invocation.invocationId, subject);
             this.send(invocation);
             return observable;
         });
+    }
+
+    private static sharedInvocationKey(subscription: InternalSubscription) {
+        return JSON.stringify(subscription);
     }
 
     public close() {
@@ -80,7 +114,7 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     private isConnected(): boolean {
-        return this.currentConnection && this.currentConnection != null;
+        return this.currentConnection && true;
     }
 
     private send(invocation: Invocation) {

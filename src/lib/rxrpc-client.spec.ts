@@ -71,8 +71,8 @@ describe('RxRpc Client test suite', function() {
             onResponse: responses.push.bind(responses)
         });
 
-        var observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
-        var observableSubscription = observable.subscribe();
+        let observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
+        let observableSubscription = observable.subscribe();
         expect(invocations.length).toEqual(1);
         observableSubscription.unsubscribe();
 
@@ -93,5 +93,25 @@ describe('RxRpc Client test suite', function() {
         observable.subscribe(() => {}, error => receivedErrors.push(error));
         expect(receivedErrors.length).toEqual(1);
         expect(receivedErrors[0].message).toEqual("Connection error");
-    })
+    });
+
+    it('Shared invocation when arguments match should reuse existing', () => {
+       const observable1 = client.invokeShared('testMethod', {arg1: 1, arg2: '2'});
+       const observable2 = client.invokeShared('testMethod', {arg1: 1, arg2: '2'});
+       expect(sentMessages.length).toEqual(0);
+
+       const subscription1 = observable1.subscribe();
+       expect(sentMessages.length).toEqual(1);
+       expect(sentMessages[0]).toEqual({ type: 'Subscription', invocationId: 1, method: 'testMethod', arguments: { arg1: 1, arg2: '2' } });
+
+       const subscription2 = observable2.subscribe();
+       expect(sentMessages.length).toEqual(1);
+
+       subscription1.unsubscribe();
+       expect(sentMessages.length).toEqual(1);
+
+       subscription2.unsubscribe();
+       expect(sentMessages.length).toEqual(2);
+       expect(sentMessages[1]).toEqual({ type: 'Unsubscription', invocationId: 1 });
+    });
 });

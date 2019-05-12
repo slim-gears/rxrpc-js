@@ -1,5 +1,5 @@
 apply from: "$scriptsDir/nodejs.gradle"
 
-npmBuild.inputs.files(fileTree(dir: "$projectDir/src"))
-npmBuild.outputs.file("$projectDir/dist")
-npmInstall.dependsOn(createWrapperScripts)
+npmBuild.inputs.dir "$projectDir/src"
+npmBuild.outputs.dir "$projectDir/dist"
+npmInstall.dependsOn(createNpmWrapperScripts)
