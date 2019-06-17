@@ -2,4 +2,4 @@ apply from: "$scriptsDir/nodejs.gradle"
 
 npmBuild.inputs.dir "$projectDir/src"
 npmBuild.outputs.dir "$projectDir/dist"
-npmInstall.dependsOn(createNpmWrapperScripts)
+yarn.dependsOn(createYarnWrapperScripts)

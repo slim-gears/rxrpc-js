@@ -8,3 +8,5 @@ build/
 /npm.cmd
 /ng
 /ng.cmd
+/yarn
+/yarn.cmd

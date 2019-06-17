@@ -6,9 +6,15 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "karma start ./karma.conf.js --single-run",
-    "debug": "karma start ./karma.conf.js --browsers ChromeDebugging",
-    "runTest": "karma run ./karma.conf.js --browsers ChromeDebugging"
+    "test": "jest"
+  },
+  "jest": {
+    "roots": [
+      "src"
+    ],
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    }
   },
   "repository": {
     "type": "git",
@@ -26,15 +32,9 @@
   },
   "homepage": "https://github.com/slim-gears/rxrpc-js#readme",
   "devDependencies": {
-    "@types/jasmine": "^2.8.8",
-    "babel-polyfill": "^6.26.0",
-    "jasmine": "^3.2.0",
-    "karma": "^3.0.0",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "karma-cli": "^1.0.1",
-    "karma-jasmine": "^1.1.2",
-    "karma-typescript": "^3.0.13",
+    "@types/jest": "^24.0.15",
+    "jest": "^24.8.0",
+    "ts-jest": "^24.0.2",
     "typescript": "^3.0.1"
   },
   "dependencies": {
@@ -45,7 +45,6 @@
     "*.ts",
     "src/lib/**/*",
     "*.json",
-    "LICENSE",
-    "karma.conf.js"
+    "LICENSE"
   ]
 }
