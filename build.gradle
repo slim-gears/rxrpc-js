@@ -1,5 +1,15 @@
 apply from: "$scriptsDir/nodejs.gradle"
 
-npmBuild.inputs.dir "$projectDir/src"
-npmBuild.outputs.dir "$projectDir/dist"
-yarn.dependsOn(createYarnWrapperScripts)
+yarnBuild {
+    inputs.dir "$projectDir/src"
+    inputs.file "$projectDir/tsconfig.json"
+    outputs.dir "$projectDir/dist"
+}
+
+yarnPack {
+    def outputFile = "${buildDir}/${project.name}.tgz"
+    args += ['--filename', outputFile]
+    outputs.file outputFile
+}
+
+project.afterEvaluate { yarn.dependsOn(createYarnWrapperScripts) }

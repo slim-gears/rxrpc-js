@@ -35,7 +35,7 @@
     "@types/jest": "^24.0.15",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.0.1"
+    "typescript": "^3.4.5"
   },
   "dependencies": {
     "rxjs": "^6.2.2"
