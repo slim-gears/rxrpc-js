@@ -10,7 +10,7 @@ describe('RxRpc Client test suite', function() {
     let client: RxRpcClient;
     let closedCalled;
     let messageSubject;
-    let errors: any[];
+    let errors: any[] = [];
     let connection: RxRpcConnection;
 
     beforeEach(() => {
@@ -54,6 +54,7 @@ describe('RxRpc Client test suite', function() {
         expect(sentMessages.length).toEqual(2);
         const unsubscriptionInvocation = <Unsubscription>sentMessages[1];
         expect(unsubscriptionInvocation.invocationId).toEqual(1);
+        expect(errors.length).toEqual(0);
     });
 
     it('Client closes transport', () => {
@@ -61,6 +62,7 @@ describe('RxRpc Client test suite', function() {
         observable.subscribe();
         client.close();
         expect(closedCalled).toBe(true);
+        expect(errors.length).toEqual(0);
     });
 
     it('Listener is invoked', () => {
@@ -84,6 +86,7 @@ describe('RxRpc Client test suite', function() {
         listenerSubscription.unsubscribe();
         observableSubscription.unsubscribe();
         expect(invocations.length).toEqual(3);
+        expect(errors.length).toEqual(0);
     });
 
     it('On error - report to all subscribers', () => {
@@ -93,11 +96,12 @@ describe('RxRpc Client test suite', function() {
         observable.subscribe(() => {}, error => receivedErrors.push(error));
         expect(receivedErrors.length).toEqual(1);
         expect(receivedErrors[0].message).toEqual("Connection error");
+        expect(errors.length).toEqual(0);
     });
 
     it('Shared invocation when arguments match should reuse existing', () => {
-       const observable1 = client.invokeShared('testMethod', {arg1: 1, arg2: '2'});
-       const observable2 = client.invokeShared('testMethod', {arg1: 1, arg2: '2'});
+       const observable1 = client.invokeShared('testMethod', 0, {arg1: 1, arg2: '2'});
+       const observable2 = client.invokeShared('testMethod', 0, {arg1: 1, arg2: '2'});
        expect(sentMessages.length).toEqual(0);
 
        const subscription1 = observable1.subscribe();
@@ -113,5 +117,6 @@ describe('RxRpc Client test suite', function() {
        subscription2.unsubscribe();
        expect(sentMessages.length).toEqual(2);
        expect(sentMessages[1]).toEqual({ type: 'Unsubscription', invocationId: 1 });
+       expect(errors.length).toEqual(0);
     });
 });

@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {finalize, flatMap, share, takeUntil, takeWhile} from 'rxjs/operators'
+import {finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -36,8 +36,7 @@ export class RxRpcClient extends RxRpcInvoker {
         this.options = {...RxRpcClient.defaultOptions, ...options};
 
         const self = this;
-        this.connectionObservable = Observable
-            .create(observer => {
+        this.connectionObservable = new Observable(observer => {
                 if (self.currentConnection) {
                     observer.next(self.currentConnection);
                     observer.complete();
@@ -66,10 +65,10 @@ export class RxRpcClient extends RxRpcInvoker {
             .pipe(RxRpcClient.toObjects<T>());
     }
 
-    public invokeShared<T>(method: string, args: any): Observable<T> {
+    public invokeShared<T>(method: string, replayCount: number, args: any): Observable<T> {
         const subscription: InternalSubscription = {method: method, args: args};
         const key = RxRpcClient.sharedInvocationKey(subscription);
-        const observable: Observable<Result> = this.sharedInvocations.get(key) || this.addShared(key, subscription);
+        const observable: Observable<Result> = this.sharedInvocations.get(key) || this.addShared(key, replayCount, subscription);
         return observable.pipe(RxRpcClient.toObjects<T>());
     }
 
@@ -79,11 +78,14 @@ export class RxRpcClient extends RxRpcInvoker {
         }));
     }
 
-    private addShared(key: string, subscription: InternalSubscription): Observable<Result> {
+    private addShared(key: string, replayCount: number, subscription: InternalSubscription): Observable<Result> {
         const observable = this.invokeInternal(subscription)
             .pipe(
                 finalize(() => this.sharedInvocations.delete(key)),
-                share());
+                shareReplay({
+                    bufferSize: replayCount,
+                    refCount: true
+                }));
         this.sharedInvocations.set(key, observable);
         return observable;
     }
