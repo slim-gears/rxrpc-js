@@ -119,4 +119,31 @@ describe('RxRpc Client test suite', function() {
        expect(sentMessages[1]).toEqual({ type: 'Unsubscription', invocationId: 1 });
        expect(errors.length).toEqual(0);
     });
+
+    it('Shared replay should replay only provided number of entries', () => {
+        const observable1 = client.invokeShared('testMethod', 2, {arg1: 1, arg2: '2'});
+        const observable2 = client.invokeShared('testMethod', 2, {arg1: 1, arg2: '2'});
+        expect(sentMessages.length).toEqual(0);
+
+        const receivedData1 = [];
+        observable1.subscribe(next => receivedData1.push(next));
+        messageSubject.next({
+            invocationId: 1,
+            result: {type: "Data", data: "data1", error: null}
+        });
+        messageSubject.next({
+            invocationId: 1,
+            result: {type: "Data", data: "data2", error: null}
+        });
+        messageSubject.next({
+            invocationId: 1,
+            result: {type: "Data", data: "data3", error: null}
+        });
+        const receivedData2 = [];
+        observable2.subscribe(next => receivedData2.push(next));
+        expect(receivedData1.length).toEqual(3);
+        expect(receivedData2.length).toEqual(2);
+        expect(receivedData2[0]).toEqual("data2");
+        expect(receivedData2[1]).toEqual("data3");
+    })
 });
