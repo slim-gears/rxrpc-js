@@ -13,3 +13,9 @@ yarnPack {
 }
 
 project.afterEvaluate { yarn.dependsOn(createYarnWrapperScripts) }
+
+task deleteBuildFiles(type: Delete) {
+    delete "$projectDir/dist", "$project.buildDir"
+}
+
+clean.dependsOn(deleteBuildFiles)
