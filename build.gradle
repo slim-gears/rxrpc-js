@@ -26,7 +26,10 @@ yarnBuild {
     outputs.dir "$projectDir/dist"
 }
 
-def sourceHash = generateMd5(yarnBuild.inputs.files, yarnPack.inputs.files)
+def sourceHash = generateMd5(
+        files("package.json"), 
+        fileTree("src"))
+
 def packageOutput = "${buildDir}/${project.name}-${sourceHash}.tgz"
 project.ext.packageFile = project.file(packageOutput)
 
