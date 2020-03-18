@@ -37,26 +37,27 @@ export class RxRpcClient extends RxRpcInvoker {
 
         const self = this;
         this.connectionObservable = new Observable(observer => {
-                if (self.currentConnection) {
-                    observer.next(self.currentConnection);
-                    observer.complete();
-                } else {
-                    self.transport.connect()
-                        .subscribe(
-                            connection => {
-                                self.onConnected(connection);
-                                observer.next(connection);
-                                observer.complete();
-                                },
-                            error => observer.error(error),
-                            () => observer.complete());
-                }
-            });
+            console.log("Current connection: " + self.currentConnection);
+            if (self.currentConnection) {
+                observer.next(self.currentConnection);
+                observer.complete();
+            } else {
+                self.transport.connect()
+                    .subscribe(
+                        connection => {
+                            console.log("RxRpcClient: got new connection");
+                            self.onConnected(connection);
+                            observer.next(connection);
+                            //observer.complete();
+                        },
+                        error => observer.error(error));
+            }
+        });
     }
 
     public addListener(listener: RxRpcInvocationListener): RxRpcInvocationListenerSubscription {
         this.listeners.push(listener);
-        return { unsubscribe: () => this.listeners = this.listeners.filter(l => l != listener) };
+        return {unsubscribe: () => this.listeners = this.listeners.filter(l => l != listener)};
     }
 
     public invoke<T>(method: string, args: any): Observable<T> {
@@ -94,7 +95,7 @@ export class RxRpcClient extends RxRpcInvoker {
         return defer(() => {
             const invocation: Invocation = Invocations.subscription(++this.invocationId, subscription.method, subscription.args);
             const subject = new Subject<Result>();
-            const observable =  subject.pipe(
+            const observable = subject.pipe(
                 takeWhile(res => res.type != ResultType.Complete),
                 finalize(() => this.unsubscribe(invocation.invocationId)));
 
@@ -151,6 +152,7 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     private onDisconnected(error: any = null) {
+        console.log("onDisconnected: stop all invocations and clear invocations list");
         this.invocations.forEach(invocation => error
             ? invocation.error(error)
             : invocation.complete());
