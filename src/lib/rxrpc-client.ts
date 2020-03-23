@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {filter, finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
+import {finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -97,7 +97,6 @@ export class RxRpcClient extends RxRpcInvoker {
             const observable =  subject.pipe(
                 takeWhile(res => res.type != ResultType.Complete),
                 finalize(() => this.unsubscribe(invocation.invocationId)));
-
             this.invocations.set(invocation.invocationId, subject);
             this.send(invocation);
             return observable;
