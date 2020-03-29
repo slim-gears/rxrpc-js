@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
+import {distinctUntilChanged, finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -30,6 +30,7 @@ export class RxRpcClient extends RxRpcInvoker {
     private listeners: RxRpcInvocationListener[] = [];
     private currentConnection: RxRpcConnection;
     private readonly sharedInvocations = new Map<string, Observable<Result>>();
+    private readonly connectedSubject = new Subject<boolean>();
 
     constructor(private readonly transport: RxRpcTransport, options?: RxRpcClientOptions) {
         super();
@@ -52,6 +53,10 @@ export class RxRpcClient extends RxRpcInvoker {
                             () => observer.complete());
                 }
             });
+    }
+
+    public observeConnected(): Observable<boolean> {
+        return this.connectedSubject.pipe(distinctUntilChanged());
     }
 
     public addListener(listener: RxRpcInvocationListener): RxRpcInvocationListenerSubscription {
@@ -138,6 +143,7 @@ export class RxRpcClient extends RxRpcInvoker {
 
     private onConnected(connection: RxRpcConnection) {
         this.currentConnection = connection;
+        this.connectedSubject.next(true);
         this.currentConnection.messages
             .pipe(takeUntil(this.cancelledSubject))
             .subscribe(
@@ -156,12 +162,15 @@ export class RxRpcClient extends RxRpcInvoker {
         this.invocations.clear();
         this.cancelledSubject.next();
         this.currentConnection = null;
+        this.connectedSubject.next(false);
     }
 
     private dispatchResponse(response: Response) {
         this.listeners.forEach(l => l.onResponse(response));
-        this.invocations
-            .get(response.invocationId)
-            .next(response.result);
+        if (this.invocations && this.invocations.has(response.invocationId)) {
+            this.invocations
+                .get(response.invocationId)
+                .next(response.result);
+        }
     }
 }
