@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {finalize, flatMap, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
+import {finalize, flatMap, refCount, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -36,7 +36,7 @@ export class RxRpcClient extends RxRpcInvoker {
         this.options = {...RxRpcClient.defaultOptions, ...options};
 
         const self = this;
-        this.connectionObservable = new Observable(observer => {
+        this.connectionObservable = new Observable<RxRpcConnection>(observer => {
                 if (self.currentConnection) {
                     observer.next(self.currentConnection);
                     observer.complete();
@@ -51,7 +51,8 @@ export class RxRpcClient extends RxRpcInvoker {
                             error => observer.error(error),
                             () => observer.complete());
                 }
-            });
+            })
+            .pipe(shareReplay({bufferSize: 1, refCount: false}))
     }
 
     public addListener(listener: RxRpcInvocationListener): RxRpcInvocationListenerSubscription {
