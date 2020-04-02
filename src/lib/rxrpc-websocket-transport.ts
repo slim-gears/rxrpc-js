@@ -16,9 +16,8 @@ export class RxRpcWebSocketTransport implements RxRpcTransport {
         return this.getConfig().pipe(
             take(1),
             map(config => {
-
                 const ws = webSocket(config);
-
+                console.log("got new websocket: " + ws);
                 return <RxRpcConnection>{
                     messages: ws,
                     send: msg => ws.next(msg),
