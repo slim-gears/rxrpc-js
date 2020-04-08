@@ -47,7 +47,7 @@ export class RxRpcClient extends RxRpcInvoker {
                             connection => {
                                 self.onConnected(connection);
                                 observer.next(connection);
-                                //observer.complete();
+                                observer.complete();
                                 },
                             error => observer.error(error),
                             () => observer.complete());
