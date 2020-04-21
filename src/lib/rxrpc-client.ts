@@ -1,5 +1,5 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {distinctUntilChanged, finalize, flatMap, refCount, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
+import {distinctUntilChanged, finalize, flatMap, refCount, share, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -53,7 +53,7 @@ export class RxRpcClient extends RxRpcInvoker {
                             () => observer.complete());
                 }
             })
-            .pipe(shareReplay({bufferSize: 1, refCount: false}))
+            .pipe(share())
     }
 
     public observeConnected(): Observable<boolean> {
