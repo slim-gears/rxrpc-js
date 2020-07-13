@@ -26,7 +26,7 @@ describe('RxRpc Reconnectable Transport test suite', function() {
             connect: () =>
                 of(connections.shift())
         };
-        return RxRpcReconnectableTransport.of(transport);
+        return RxRpcReconnectableTransport.of(transport, 1000, 32000);
     }
 
     beforeEach(() => {
@@ -37,6 +37,7 @@ describe('RxRpc Reconnectable Transport test suite', function() {
 
     test('Should retry connection when could not connect', done => {
         const reconnectableTransport = createReconnectableTransport(
+            connectionFromMessages(throwError("connection failed")),
             connectionFromMessages(throwError("connection failed")),
             connectionFromMessages(nonCompletingMessages("test message")));
         reconnectableTransport.connect()
@@ -55,11 +56,12 @@ describe('RxRpc Reconnectable Transport test suite', function() {
                     expect(receivedConnections.length).toEqual(1);
                     done();
                 });
-    });
+    }, 20000);
 
     test('Should retry connection when received error', done => {
         const messages = new Subject();
         const reconnectableTransport = createReconnectableTransport(
+            connectionFromMessages(messages),
             connectionFromMessages(messages),
             connectionFromMessages(nonCompletingMessages("test message 2")));
 
@@ -87,5 +89,5 @@ describe('RxRpc Reconnectable Transport test suite', function() {
         expect(receivedConnections.length).toEqual(1);
 
         messages.error("");
-    });
+    }, 20000);
 });

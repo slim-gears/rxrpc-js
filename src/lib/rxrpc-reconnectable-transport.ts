@@ -1,22 +1,31 @@
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
-import {defer, MonoTypeOperatorFunction, Observable, Subject, Subscriber} from 'rxjs';
-import {delay, retryWhen, takeUntil} from 'rxjs/operators';
+import {defer, MonoTypeOperatorFunction, Observable, Subject, Subscriber, of} from 'rxjs';
+import {delay, retryWhen, switchMap, takeUntil, tap} from 'rxjs/operators';
 
 export class RxRpcReconnectableTransport extends RxRpcTransport {
-    constructor(private transport: RxRpcTransport) {
+    private static readonly DEFAULT_MIN_DELAY_MILLIS: number = 1000;
+    private static readonly DEFAULT_MAX_DELAY_MILLIS: number = 32000;
+
+    constructor(private transport: RxRpcTransport,
+                private minDelayMillis = RxRpcReconnectableTransport.DEFAULT_MIN_DELAY_MILLIS,
+                private maxDelayMillis = RxRpcReconnectableTransport.DEFAULT_MAX_DELAY_MILLIS) {
         super();
     }
 
     connect(): Observable<RxRpcConnection> {
+        let delayMillis = this.minDelayMillis;
         return defer(() => this.transport.connect())
             .pipe(
                 RxRpcReconnectableTransport.passThroughMessageErrors(),
                 retryWhen(errors => errors
-                    .pipe(delay(1000))));
+                    .pipe(
+                        switchMap(e => of(e).pipe(delay(delayMillis))),
+                        tap(() => delayMillis = Math.min(this.maxDelayMillis, delayMillis * 2)))),
+                tap(() => delayMillis = this.minDelayMillis));
     }
 
-    public static of(transport: RxRpcTransport): RxRpcTransport {
-        return new RxRpcReconnectableTransport(transport);
+    public static of(transport: RxRpcTransport, minDelayMillis?: number, maxDelayMillis?: number): RxRpcTransport {
+        return new RxRpcReconnectableTransport(transport, minDelayMillis, maxDelayMillis);
     }
 
     private static passThroughMessageErrors(): MonoTypeOperatorFunction<RxRpcConnection> {
