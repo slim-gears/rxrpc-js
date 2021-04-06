@@ -34,9 +34,9 @@
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "jest": "^24.8.0",
+    "rxjs": "^6.2.2",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.4.5",
-    "rxjs": "^6.2.2"
+    "typescript": "^3.4.5"
   },
   "peerDependencies": {
     "rxjs": "^6.2.2"
@@ -47,5 +47,8 @@
     "src/lib/**/*",
     "*.json",
     "LICENSE"
-  ]
+  ],
+  "dependencies": {
+    "axios": "^0.21.1"
+  }
 }
