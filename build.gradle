@@ -1,18 +1,17 @@
 apply from: "$scriptsDir/nodejs.gradle"
 
 yarnBuild {
-    inputs.dir "$projectDir/src"
-    inputs.file "$projectDir/tsconfig.json"
-    outputs.dir "$projectDir/dist"
+    it.inputs.dir "$projectDir/src"
+    it.inputs.file "$projectDir/tsconfig.json"
+    it.outputs.dir "$projectDir/dist"
 }
 
 def packageOutput = "${buildDir}/${project.name}.tgz"
-println "packageOutput: $packageOutput"
 project.ext.packageFile = project.file(packageOutput)
 
 yarnPack {
-    args.addAll providers.provider {['--filename', packageOutput]}
-    outputs.file packageOutput
+    it.args.addAll provider {['--filename', packageOutput]}
+    it.outputs.file packageOutput
 }
 
 project.afterEvaluate { yarn.dependsOn(createYarnWrapperScripts) }
