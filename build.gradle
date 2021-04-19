@@ -1,24 +1,4 @@
-import java.security.MessageDigest
-
 apply from: "$scriptsDir/nodejs.gradle"
-
-static def generateMd5(final FileCollection... fileCollections) {
-    MessageDigest digest = MessageDigest.getInstance("MD5")
-    fileCollections.each { files -> files.forEach { file ->
-            file.withInputStream() { is ->
-                byte[] buffer = new byte[8192]
-                int read
-                while ((read = is.read(buffer)) > 0) {
-                    digest.update(buffer, 0, read)
-                }
-            }
-        } }
-
-    byte[] md5sum = digest.digest()
-    //noinspection GroovyAssignabilityCheck
-    BigInteger bigInt = new BigInteger(1, md5sum)
-    return bigInt.toString(16).padLeft(32, '0').substring(0, 8)
-}
 
 yarnBuild {
     inputs.dir "$projectDir/src"
@@ -26,15 +6,12 @@ yarnBuild {
     outputs.dir "$projectDir/dist"
 }
 
-def sourceHash = generateMd5(
-        files("package.json"), 
-        fileTree("src"))
-
-def packageOutput = "${buildDir}/${project.name}-${sourceHash}.tgz"
+def packageOutput = "${buildDir}/${project.name}.tgz"
+println "packageOutput: $packageOutput"
 project.ext.packageFile = project.file(packageOutput)
 
 yarnPack {
-    args += ['--filename', packageOutput]
+    args.addAll providers.provider {['--filename', packageOutput]}
     outputs.file packageOutput
 }
 
