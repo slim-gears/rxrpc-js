@@ -1,6 +1,6 @@
 
 export class HttpAttributes {
     static ClientIdAttribute = "X-RPC-CLIENT-ID";
-    static ClientPollingPeriod = 500;
+    static ClientPollingPeriod = 1000;
     static ClientPollingRetryCount = 10;
 }
