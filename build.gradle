@@ -6,14 +6,6 @@ yarnBuild {
     it.outputs.dir "$projectDir/dist"
 }
 
-def packageOutput = "${buildDir}/${project.name}.tgz"
-project.ext.packageFile = project.file(packageOutput)
-
-yarnPack {
-    it.args.addAll provider {['--filename', packageOutput]}
-    it.outputs.file packageOutput
-}
-
 project.afterEvaluate { yarn.dependsOn(createYarnWrapperScripts) }
 
 task deleteBuildFiles(type: Delete) {
