@@ -6,18 +6,24 @@ import axios, {AxiosResponse} from 'axios';
 import {fromPromise} from "rxjs/internal-compatibility";
 import {fromArray} from "rxjs/internal/observable/fromArray";
 
+export interface RxRpcHttpTransportOptions {
+    pollingPeriodMillis?: number
+    pollingRetryCount?: number
+}
 
 export class RxRpcHttpConnection implements RxRpcConnection {
     readonly messages: Observable<any>;
     private pollingSubscription: Subscription;
     private readonly incoming = new Subject<any>();
 
-    constructor(private readonly uri: string, private readonly clientId: string) {
+    constructor(private readonly uri: string,
+                private readonly clientId: string,
+                options: RxRpcHttpTransportOptions) {
         this.messages = this.incoming;
-        this.pollingSubscription = interval(HttpAttributes.ClientPollingPeriod)
+        this.pollingSubscription = interval(options.pollingPeriodMillis)
             .pipe(
                 mergeMap(() => this.poll()),
-                retry(HttpAttributes.ClientPollingRetryCount))
+                retry(options.pollingRetryCount))
             .subscribe(
                 obj => this.incoming.next(obj),
                 err => this.incoming.error(err),
@@ -57,15 +63,22 @@ export class RxRpcHttpConnection implements RxRpcConnection {
 }
 
 export class RxRpcHttpTransport implements RxRpcTransport {
+    private readonly options: RxRpcHttpTransportOptions;
+    private static readonly defaultOptions: RxRpcHttpTransportOptions = {
+        pollingPeriodMillis: HttpAttributes.DefaultClientPollingPeriodMillis,
+        pollingRetryCount: HttpAttributes.DefaultClientPollingRetryCount
+    }
 
-    constructor(private readonly uri: string) {}
+    constructor(private readonly uri: string, options?: RxRpcHttpTransportOptions) {
+        this.options = {...RxRpcHttpTransport.defaultOptions, ...options} || RxRpcHttpTransport.defaultOptions
+    }
 
     connect(): Observable<RxRpcHttpConnection> {
         return fromPromise(axios.post<string>(`${this.uri}/connect`))
             .pipe(
                 map( res => {
                     const clientId = res.headers[HttpAttributes.ClientIdAttribute.toLowerCase()];
-                    return new RxRpcHttpConnection(this.uri, clientId);
+                    return new RxRpcHttpConnection(this.uri, clientId, this.options);
                 }));
     }
 }
