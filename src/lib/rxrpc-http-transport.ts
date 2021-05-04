@@ -39,26 +39,23 @@ export class RxRpcHttpConnection implements RxRpcConnection {
     }
 
     send(msg: any) {
-        this.post('message', msg).subscribe();
+        this.post('message', msg)
+            .subscribe(obj => this.incoming.next(obj));
     }
 
     poll(): Observable<any> {
-        return this.post('polling')
-            .pipe(
-                map(resp => resp.data),
-                filter(data => data !== ""),
-                mergeMap(data => {
-                    if(typeof data === 'string') {
-                        return fromArray(data.split("\n").filter(s => s).map(s => JSON.parse(s)));
-                    }
-                    return of(data);
-                }));
+        return this.post('polling');
     }
 
-    post(path: string, msg?: any): Observable<AxiosResponse<string>> {
+    post(path: string, msg?: any): Observable<any> {
         const headers = {};
         headers[HttpAttributes.ClientIdAttribute] = this.clientId;
         return fromPromise(axios.post<string>(`${this.uri}/${path}`, msg, {headers: headers}))
+            .pipe(
+                map(resp => resp.data),
+                mergeMap(data => {
+                    return fromArray(data);
+            }));
     }
 }
 
