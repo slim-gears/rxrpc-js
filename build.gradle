@@ -12,4 +12,8 @@ task deleteBuildFiles(type: Delete) {
     delete "$projectDir/dist", "$project.buildDir"
 }
 
+yarn {
+    it.args.addAll provider {["--network-timeout", "600000"]}
+}
+
 clean.dependsOn(deleteBuildFiles)

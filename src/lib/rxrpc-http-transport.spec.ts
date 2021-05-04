@@ -15,7 +15,7 @@ describe('RxRpc Http Transport test suite', function () {
     let resp: {}
 
     beforeEach(() => {
-        transport = new RxRpcHttpTransport("http://funnyName/");
+        transport = new RxRpcHttpTransport("https://funnyName/");
         clientId = "12345678";
         incomingMessages = [];
         resp = {
@@ -31,10 +31,10 @@ describe('RxRpc Http Transport test suite', function () {
         expect(incomingMessages[0]).toEqual(clientId)
     })
 
-    it('Poll with data as a string', async () => {
+    it('Poll multiple messages with data as JSON', async () => {
         const data1 = "{\"invocationId\":1,\"result\":{\"type\":\"Data\",\"data\":\"Hello, Angular #0\",\"error\":null}}"
         const data2 = "{\"invocationId\":1,\"result\":{\"type\":\"Data\",\"data\":\"Hello, Angular #1\",\"error\":null}}"
-        resp['data'] = `${data1}\n${data2}`
+        resp['data'] = JSON.parse(`[${data1},\n${data2}]`)
         mockedAxios.post.mockImplementation(() => Promise.resolve(resp));
 
         transport.connect().subscribe(connection => connection.poll().subscribe(msg => {
@@ -46,9 +46,9 @@ describe('RxRpc Http Transport test suite', function () {
         expect(incomingMessages[1]).toEqual(JSON.parse(data2));
     })
 
-    it('Poll with data as an object', async () => {
+    it('Poll with data as JSON', async () => {
         const data = "{\"invocationId\":1,\"result\":{\"type\":\"Data\",\"data\":\"Hello, Angular #0\",\"error\":null}}"
-        resp['data'] = JSON.parse(data)
+        resp['data'] = JSON.parse(`[${data}]`)
         mockedAxios.post.mockImplementation(() => Promise.resolve(resp));
 
         transport.connect().subscribe(connection => connection.poll().subscribe(msg => {

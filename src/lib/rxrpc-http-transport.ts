@@ -1,6 +1,6 @@
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
 import {interval, Observable, of, Subject, Subscription} from 'rxjs';
-import {filter, map, mergeMap, retry, tap} from "rxjs/operators";
+import {mergeMap, map, retry, filter, tap} from "rxjs/operators";
 import {HttpAttributes} from "./rxrpc-http-attributes";
 import axios, {AxiosResponse} from 'axios';
 import {fromPromise} from "rxjs/internal-compatibility";
@@ -26,7 +26,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                 retry(options.pollingRetryCount))
             .subscribe(
                 () => {},
-                err => this.incoming.error(err),
+                () => {},
                 () => this.incoming.complete());
     }
 
@@ -43,23 +43,23 @@ export class RxRpcHttpConnection implements RxRpcConnection {
     }
 
     poll(): Observable<any> {
-        return this.post('polling')
-            .pipe(
-                map(resp => resp.data),
-                filter(data => data !== ""),
-                mergeMap(data => {
-                    if(typeof data === 'string') {
-                        return fromArray(data.split("\n").map(s => JSON.parse(s)));
-                    }
-                    return of(data);
-                }),
-                tap(obj => this.incoming.next(obj)));
+        return this.post('polling');
     }
 
-    post(path: string, msg?: any): Observable<AxiosResponse<string>> {
+    post(path: string, msg?: any): Observable<any> {
         const headers = {};
         headers[HttpAttributes.ClientIdAttribute] = this.clientId;
         return fromPromise(axios.post<string>(`${this.uri}/${path}`, msg, {headers: headers}))
+            .pipe(
+                map(resp => resp.data),
+                mergeMap(data => {
+                    return fromArray(data);
+                }),
+                tap(
+                obj => this.incoming.next(obj),
+                err => this.incoming.error(err)
+                )
+            );
     }
 }
 
