@@ -1,6 +1,6 @@
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport';
 import {interval, Observable, of, Subject, Subscription} from 'rxjs';
-import {mergeMap, map, retry, filter} from "rxjs/operators";
+import {mergeMap, map, retry, filter, tap} from "rxjs/operators";
 import {HttpAttributes} from "./rxrpc-http-attributes";
 import axios, {AxiosResponse} from 'axios';
 import {fromPromise} from "rxjs/internal-compatibility";
@@ -25,8 +25,8 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                 mergeMap(() => this.poll()),
                 retry(options.pollingRetryCount))
             .subscribe(
-                obj => this.incoming.next(obj),
-                err => this.incoming.error(err),
+                () => {},
+                () => {},
                 () => this.incoming.complete());
     }
 
@@ -39,8 +39,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
     }
 
     send(msg: any) {
-        this.post('message', msg)
-            .subscribe(obj => this.incoming.next(obj));
+        this.post('message', msg).subscribe();
     }
 
     poll(): Observable<any> {
@@ -55,7 +54,12 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                 map(resp => resp.data),
                 mergeMap(data => {
                     return fromArray(data);
-            }));
+                }),
+                tap(
+                obj => this.incoming.next(obj),
+                err => this.incoming.error(err)
+                )
+            );
     }
 }
 
