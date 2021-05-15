@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "assumeChangesOnlyAffectDirectDependencies": true,
+    "incremental": true,
     "outDir": "dist",
     "sourceMap": true,
     "declaration": true,
