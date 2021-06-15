@@ -31,6 +31,13 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                 options: RxRpcHttpTransportOptions) {
 
         this.interceptors = options.interceptors || [];
+        this.interceptors.push({
+                intercept(requestConfig: RxRpcHttpTransportRequestConfig): Observable<RxRpcHttpTransportRequestConfig> {
+                    requestConfig.headers[HttpAttributes.ClientIdAttribute] = clientId;
+                    return of(requestConfig);
+                }
+        });
+
         this.messages = this.incoming;
         this.pollingSubscription = interval(options.pollingPeriodMillis)
             .pipe(
@@ -44,6 +51,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
 
     close() {
         this.pollingSubscription.unsubscribe();
+        RxRpcHttpConnection.postWithInterceptors(`${this.uri}/disconnect`, this.interceptors).subscribe();
     }
 
     error(error: any) {
@@ -58,27 +66,30 @@ export class RxRpcHttpConnection implements RxRpcConnection {
         return this.post('polling');
     }
 
-    post(path: string, msg?: any): Observable<any> {
+    static postWithInterceptors(url: string, interceptors: RxRpcHttpTransportInterceptor[], body?: any): Observable<any> {
         const headers = {};
 
-        headers[HttpAttributes.ClientIdAttribute] = this.clientId;
         let config: Observable<RxRpcHttpTransportRequestConfig> = of({headers: headers});
 
         // flatten all interceptor observable
-        this.interceptors.forEach(interceptor => config = config.pipe(mergeMap(cfg => interceptor.intercept(cfg))));
+        interceptors.forEach(interceptor => config = config.pipe(mergeMap(cfg => interceptor.intercept(cfg))));
 
         return config.pipe(mergeMap(cfg =>
-            fromPromise(axios.post<string>(`${this.uri}/${path}`, msg, {headers: cfg.headers}))
-                .pipe(
-                    map(resp => resp.data),
-                    mergeMap(data => {
-                        return fromArray(data);
-                    }),
-                    tap(
-                        obj => this.incoming.next(obj),
-                        err => this.incoming.error(err)
-                    )
-            )));
+            fromPromise(axios.post<string>(url, body, {headers: cfg.headers}))));
+    }
+
+    post(path: string, msg?: any): Observable<any> {
+        return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/${path}`, this.interceptors, msg)
+            .pipe(
+                map(resp => resp.data),
+                mergeMap(data => {
+                    return fromArray(data);
+                }),
+                tap(
+                obj => this.incoming.next(obj),
+                err => this.incoming.error(err)
+                )
+            )
     }
 }
 
@@ -95,11 +106,10 @@ export class RxRpcHttpTransport implements RxRpcTransport {
     }
 
     connect(): Observable<RxRpcHttpConnection> {
-        return fromPromise(axios.post<string>(`${this.uri}/connect`))
-            .pipe(
-                map( res => {
-                    const clientId = res.headers[HttpAttributes.ClientIdAttribute.toLowerCase()];
-                    return new RxRpcHttpConnection(this.uri, clientId, this.options);
-                }));
+        return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/connect`, this.options.interceptors)
+            .pipe(map( res => {
+                const clientId = res.headers[HttpAttributes.ClientIdAttribute.toLowerCase()];
+                return new RxRpcHttpConnection(this.uri, clientId, this.options);
+            }));
     }
 }
