@@ -69,7 +69,7 @@ describe('RxRpc Http Transport test suite', function () {
         resp['data'] = JSON.parse(`[${data1},\n${data2}]`)
         mockAndVerifyExpectedHeaders();
         transport.connect().subscribe(connection => {
-            mockAndVerifyExpectedHeadersWIthClientId();
+            mockAndVerifyExpectedHeadersWithClientId();
             connection.poll().subscribe(msg => {
                 incomingMessages.push(msg);
             })
@@ -85,7 +85,7 @@ describe('RxRpc Http Transport test suite', function () {
         resp['data'] = JSON.parse(`[${data}]`)
         mockAndVerifyExpectedHeaders();
         transport.connect().subscribe(connection => {
-            mockAndVerifyExpectedHeadersWIthClientId();
+            mockAndVerifyExpectedHeadersWithClientId();
             connection.poll().subscribe(msg => {
                 incomingMessages.push(msg);
             })
@@ -100,7 +100,7 @@ describe('RxRpc Http Transport test suite', function () {
         transport.connect().subscribe(connection => incomingMessages.push(connection))
         await delay(1000);
         const connection =  incomingMessages[0] as RxRpcHttpConnection;
-        mockAndVerifyExpectedHeadersWIthClientId();
+        mockAndVerifyExpectedHeadersWithClientId();
         connection.close()
         expect(connection['pollingSubscription'].closed).toEqual(true)
     })
@@ -110,7 +110,7 @@ describe('RxRpc Http Transport test suite', function () {
         transport.connect().subscribe(connection => incomingMessages.push(connection))
         await delay(1000);
         const connection =  incomingMessages[0] as RxRpcHttpConnection;
-        mockAndVerifyExpectedHeadersWIthClientId();
+        mockAndVerifyExpectedHeadersWithClientId();
         connection.error(null)
         expect(connection['pollingSubscription'].closed).toEqual(true)
     })
@@ -118,7 +118,7 @@ describe('RxRpc Http Transport test suite', function () {
     function mockAndVerifyExpectedHeaders()   {
         mockAndVerifyHeaders(getHeaders());
     }
-    function mockAndVerifyExpectedHeadersWIthClientId()   {
+    function mockAndVerifyExpectedHeadersWithClientId()   {
         mockAndVerifyHeaders(getHeadersWithClientId());
     }
     function mockAndVerifyHeaders(expectedHeaders: {}) {
