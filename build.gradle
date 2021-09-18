@@ -1,41 +1,9 @@
-import java.security.MessageDigest
-
 apply from: "$scriptsDir/nodejs.gradle"
 
-static def generateMd5(final FileCollection... fileCollections) {
-    MessageDigest digest = MessageDigest.getInstance("MD5")
-    fileCollections.each { files -> files.forEach { file ->
-            file.withInputStream() { is ->
-                byte[] buffer = new byte[8192]
-                int read
-                while ((read = is.read(buffer)) > 0) {
-                    digest.update(buffer, 0, read)
-                }
-            }
-        } }
-
-    byte[] md5sum = digest.digest()
-    //noinspection GroovyAssignabilityCheck
-    BigInteger bigInt = new BigInteger(1, md5sum)
-    return bigInt.toString(16).padLeft(32, '0').substring(0, 8)
-}
-
 yarnBuild {
-    inputs.dir "$projectDir/src"
-    inputs.file "$projectDir/tsconfig.json"
-    outputs.dir "$projectDir/dist"
-}
-
-def sourceHash = generateMd5(
-        files("package.json"), 
-        fileTree("src"))
-
-def packageOutput = "${buildDir}/${project.name}-${sourceHash}.tgz"
-project.ext.packageFile = project.file(packageOutput)
-
-yarnPack {
-    args += ['--filename', packageOutput]
-    outputs.file packageOutput
+    it.inputs.dir "$projectDir/src"
+    it.inputs.file "$projectDir/tsconfig.json"
+    it.outputs.dir "$projectDir/dist"
 }
 
 project.afterEvaluate { yarn.dependsOn(createYarnWrapperScripts) }
@@ -44,4 +12,9 @@ task deleteBuildFiles(type: Delete) {
     delete "$projectDir/dist", "$project.buildDir"
 }
 
+yarn {
+    it.args.addAll provider {["--network-timeout", "600000"]}
+}
+
 clean.dependsOn(deleteBuildFiles)
+
