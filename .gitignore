@@ -10,3 +10,4 @@ build/
 /ng.cmd
 /yarn
 /yarn.cmd
+*.log
