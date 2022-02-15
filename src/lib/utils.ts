@@ -1,6 +1,16 @@
 import {Observable, Operator, OperatorFunction, pipe} from "rxjs";
 import {map} from "rxjs/operators";
 
+export enum HttpStatus {
+    OK = 200,
+    OK_LAST = 299,
+    BAD_REQUEST = 400,
+    UNAUTHORIZED = 401
+}
+
+export function isHttpSuccess(httpStatus: number) {
+    return httpStatus >= HttpStatus.OK && httpStatus <= HttpStatus.OK_LAST
+}
 
 // http://www.onicos.com/staff/iz/amuse/javascript/expert/utf.txt
 

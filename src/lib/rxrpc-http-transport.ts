@@ -6,7 +6,7 @@ import {fromPromise} from "rxjs/internal-compatibility";
 import {fromArray} from "rxjs/internal/observable/fromArray";
 import * as log from "loglevel"
 import {flatMap} from "rxjs/internal/operators";
-import {fromJson, utf8ArrayToStr} from "./utils";
+import {isHttpSuccess, fromJson, utf8ArrayToStr} from "./utils";
 
 export interface RxRpcHttpTransportOptions {
     idlePollingPeriodMillis?: number
@@ -22,17 +22,6 @@ export interface RxRpcHttpTransportRequestConfig {
 
 export interface RxRpcHttpTransportInterceptor {
     intercept(requestConfig: RxRpcHttpTransportRequestConfig) : Observable<RxRpcHttpTransportRequestConfig>;
-}
-
-enum HttpStatus {
-    OK = 200,
-    OK_LAST = 299,
-    BAD_REQUEST = 400,
-    UNAUTHORIZED = 401
-}
-
-function isSuccess(httpStatus: number) {
-    return httpStatus >= HttpStatus.OK && httpStatus <= HttpStatus.OK_LAST
 }
 
 export class RxRpcHttpConnection implements RxRpcConnection {
@@ -92,7 +81,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
 
     private observe(): Observable<any> {
         return new Observable<string>(observer => fromPromise(this.observeAsync(observer)).subscribe())
-            .pipe(fromJson())
+            .pipe(fromJson(), retry(this.options.pollingRetryCount))
     }
 
     private async observeAsync(observer: Observer<string>) {
@@ -102,7 +91,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
         while (!observer.closed) {
             log.debug('Beginning observe. Request info: ', request)
             const response = await fetch(`${this.uri}/observe`, {headers: request.headers})
-            if (isSuccess(response.status)) {
+            if (isHttpSuccess(response.status)) {
                 const reader = response.body.getReader()
                 while (!observer.closed) {
                     log.debug('Beginning wait for message')
@@ -186,7 +175,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/${path}`, RxRpcHttpConnection.requestConfig(this.interceptors), msg)
             .pipe(
                 flatMap(resp => {
-                    if (!isSuccess(resp.status)) {
+                    if (!isHttpSuccess(resp.status)) {
                         throwError(resp.statusText);
                     }
                     return fromPromise(resp.text())
@@ -222,7 +211,7 @@ export class RxRpcHttpTransport implements RxRpcTransport {
     connect(): Observable<RxRpcHttpConnection> {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/connect`, RxRpcHttpConnection.requestConfig(this.options.interceptors))
             .pipe(flatMap( res => {
-                if (!isSuccess(res.status)) {
+                if (!isHttpSuccess(res.status)) {
                     throwError(res.statusText)
                 }
                 log.debug('Connection response received', typeof(res), res)
