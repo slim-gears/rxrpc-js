@@ -6,6 +6,7 @@ import {fromPromise} from "rxjs/internal-compatibility";
 import {fromArray} from "rxjs/internal/observable/fromArray";
 import * as log from "loglevel"
 import {flatMap} from "rxjs/internal/operators";
+import {fromJson, utf8ArrayToStr} from "./utils";
 
 export interface RxRpcHttpTransportOptions {
     idlePollingPeriodMillis?: number
@@ -56,7 +57,10 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                 this.longPollInProgress = true;
                 return this.observe()
             }).pipe(finalize(() => this.longPollInProgress = false))
-                .subscribe(obj => this.incoming.next(obj), err => this.incoming.error(err), () => this.incoming.complete())
+                .subscribe(
+                    obj => this.incoming.next(obj),
+                    err => this.incoming.error(err),
+                    () => this.incoming.complete())
         }
         this.pollIntervalMillis = this.options.idlePollingPeriodMillis;
         this.messages = this.incoming;
@@ -82,10 +86,11 @@ export class RxRpcHttpConnection implements RxRpcConnection {
     }
 
     private observe(): Observable<any> {
-        return new Observable<any>(observer => fromPromise(this.observeAsync(observer)).subscribe());
+        return new Observable<string>(observer => fromPromise(this.observeAsync(observer)).subscribe())
+            .pipe(fromJson())
     }
 
-    private async observeAsync(observer: Observer<any>) {
+    private async observeAsync(observer: Observer<string>) {
         this.longPollInProgress = true
         const request = await RxRpcHttpConnection.requestConfig(this.interceptors).toPromise()
 
@@ -99,13 +104,9 @@ export class RxRpcHttpConnection implements RxRpcConnection {
                     const result = await reader.read()
                     log.debug(`Received result (done: ${result.done})`)
                     if (!result.done) {
-                        const msg = RxRpcHttpTransport.utf8ArrayToStr(result.value)
+                        const msg = utf8ArrayToStr(result.value)
                         log.debug('Received message: ', msg)
-
-                        const obj = JSON.parse(msg)
-                        log.debug('Received object: ', obj)
-
-                        observer.next(obj)
+                        observer.next(msg)
                     } else {
                         break;
                     }
@@ -217,47 +218,4 @@ export class RxRpcHttpTransport implements RxRpcTransport {
             }));
     }
 
-// http://www.onicos.com/staff/iz/amuse/javascript/expert/utf.txt
-
-    /* utf.js - UTF-8 <=> UTF-16 convertion
-     *
-     * Copyright (C) 1999 Masanao Izumo <iz@onicos.co.jp>
-     * Version: 1.0
-     * LastModified: Dec 25 1999
-     * This library is free.  You can redistribute it and/or modify it.
-     */
-
-    static utf8ArrayToStr(array: Uint8Array): string {
-        let out, i, len, c;
-        let char2, char3;
-
-        out = "";
-        len = array.length;
-        i = 0;
-        while(i < len) {
-            c = array[i++];
-            switch(c >> 4)
-            {
-                case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-                // 0xxxxxxx
-                out += String.fromCharCode(c);
-                break;
-                case 12: case 13:
-                // 110x xxxx   10xx xxxx
-                char2 = array[i++];
-                out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
-                break;
-                case 14:
-                    // 1110 xxxx  10xx xxxx  10xx xxxx
-                    char2 = array[i++];
-                    char3 = array[i++];
-                    out += String.fromCharCode(((c & 0x0F) << 12) |
-                        ((char2 & 0x3F) << 6) |
-                        ((char3 & 0x3F) << 0));
-                    break;
-            }
-        }
-
-        return out;
-    }
 }
