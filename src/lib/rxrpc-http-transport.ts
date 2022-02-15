@@ -26,8 +26,13 @@ export interface RxRpcHttpTransportInterceptor {
 
 enum HttpStatus {
     OK = 200,
+    OK_LAST = 299,
     BAD_REQUEST = 400,
     UNAUTHORIZED = 401
+}
+
+function isSuccess(httpStatus: number) {
+    return httpStatus >= HttpStatus.OK && httpStatus <= HttpStatus.OK_LAST
 }
 
 export class RxRpcHttpConnection implements RxRpcConnection {
@@ -97,7 +102,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
         while (!observer.closed) {
             log.debug('Beginning observe. Request info: ', request)
             const response = await fetch(`${this.uri}/observe`, {headers: request.headers})
-            if (response.status == HttpStatus.OK) {
+            if (isSuccess(response.status)) {
                 const reader = response.body.getReader()
                 while (!observer.closed) {
                     log.debug('Beginning wait for message')
@@ -181,7 +186,7 @@ export class RxRpcHttpConnection implements RxRpcConnection {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/${path}`, RxRpcHttpConnection.requestConfig(this.interceptors), msg)
             .pipe(
                 flatMap(resp => {
-                    if (resp.status != HttpStatus.OK) {
+                    if (!isSuccess(resp.status)) {
                         throwError(resp.statusText);
                     }
                     return fromPromise(resp.text())
@@ -217,7 +222,7 @@ export class RxRpcHttpTransport implements RxRpcTransport {
     connect(): Observable<RxRpcHttpConnection> {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/connect`, RxRpcHttpConnection.requestConfig(this.options.interceptors))
             .pipe(flatMap( res => {
-                if (res.status != HttpStatus.OK) {
+                if (!isSuccess(res.status)) {
                     throwError(res.statusText)
                 }
                 log.debug('Connection response received', typeof(res), res)
@@ -225,5 +230,4 @@ export class RxRpcHttpTransport implements RxRpcTransport {
                 return of(new RxRpcHttpConnection(this.uri, clientId, this.options));
             }));
     }
-
 }
