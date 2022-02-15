@@ -180,7 +180,12 @@ export class RxRpcHttpConnection implements RxRpcConnection {
     post(path: string, msg?: any): Observable<any> {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/${path}`, RxRpcHttpConnection.requestConfig(this.interceptors), msg)
             .pipe(
-                flatMap(resp => fromPromise(resp.text())),
+                flatMap(resp => {
+                    if (resp.status != HttpStatus.OK) {
+                        throwError(resp.statusText);
+                    }
+                    return fromPromise(resp.text())
+                }),
                 filter(t => !!t),
                 tap(t => log.debug("Received message: ", t)),
                 map(t => JSON.parse(t)),
@@ -211,10 +216,13 @@ export class RxRpcHttpTransport implements RxRpcTransport {
 
     connect(): Observable<RxRpcHttpConnection> {
         return RxRpcHttpConnection.postWithInterceptors(`${this.uri}/connect`, RxRpcHttpConnection.requestConfig(this.options.interceptors))
-            .pipe(map( res => {
+            .pipe(flatMap( res => {
+                if (res.status != HttpStatus.OK) {
+                    throwError(res.statusText)
+                }
                 log.debug('Connection response received', typeof(res), res)
                 const clientId = res.headers.get(HttpAttributes.ClientIdAttribute.toLocaleLowerCase());
-                return new RxRpcHttpConnection(this.uri, clientId, this.options);
+                return of(new RxRpcHttpConnection(this.uri, clientId, this.options));
             }));
     }
 
