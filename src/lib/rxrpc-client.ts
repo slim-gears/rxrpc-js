@@ -1,5 +1,15 @@
 import {defer, interval, Observable, of, OperatorFunction, Subject, throwError} from 'rxjs';
-import {distinctUntilChanged, finalize, flatMap, refCount, share, shareReplay, takeUntil, takeWhile} from 'rxjs/operators'
+import {
+    bufferTime,
+    distinctUntilChanged, filter,
+    finalize,
+    flatMap, map,
+    refCount,
+    share,
+    shareReplay,
+    takeUntil,
+    takeWhile
+} from 'rxjs/operators'
 import {Response} from './data/response';
 import {Result} from './data/result';
 import {Invocation, Invocations} from './data/invocation';
@@ -31,6 +41,7 @@ export class RxRpcClient extends RxRpcInvoker {
     private currentConnection: RxRpcConnection;
     private readonly sharedInvocations = new Map<string, Observable<Result>>();
     private readonly connectedSubject = new Subject<boolean>();
+    private readonly sendSubject = new Subject<Invocation>();
 
     constructor(private readonly transport: RxRpcTransport, options?: RxRpcClientOptions) {
         super();
@@ -54,6 +65,18 @@ export class RxRpcClient extends RxRpcInvoker {
                 }
             })
             .pipe(share())
+        this.sendSubject.asObservable().pipe(
+            bufferTime(50),
+            filter(buff => buff.length > 0),
+            map(buff => buff.length > 1 ? Invocations.aggregation(...buff) : buff[0]))
+            .subscribe(invocation => this.connectionObservable
+                .subscribe(connection => {
+                    this.listeners.forEach(l => l.onInvocation(invocation));
+                    connection.send(invocation);
+                }, error => {
+                    this.currentConnection.error(error);
+                    this.close();
+                }))
     }
 
     public observeConnected(): Observable<boolean> {
@@ -125,13 +148,8 @@ export class RxRpcClient extends RxRpcInvoker {
     }
 
     private send(invocation: Invocation) {
-        this.connectionObservable.subscribe(connection => {
-            this.listeners.forEach(l => l.onInvocation(invocation));
-            connection.send(invocation);
-        }, error => {
-            this.currentConnection.error(error);
-            this.close();
-        });
+        this.listeners.forEach(l => l.onInvocation(invocation));
+        this.sendSubject.next(invocation);
     }
 
     private unsubscribe(invocationId: number) {

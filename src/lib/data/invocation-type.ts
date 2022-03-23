@@ -1,5 +1,6 @@
 export enum InvocationType {
     Subscription = 'Subscription',
     Unsubscription = 'Unsubscription',
-    KeepAlive = 'KeepAlive'
+    KeepAlive = 'KeepAlive',
+    Aggregation = 'Aggregation'
 }

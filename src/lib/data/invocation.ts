@@ -22,7 +22,12 @@ export interface KeepAlive extends HasInvocationType {
     type: InvocationType.KeepAlive;
 }
 
-export type Invocation = Subscription | Unsubscription | KeepAlive
+export interface Aggregation extends HasInvocationId {
+    type: InvocationType.Aggregation;
+    invocations: Invocation[];
+}
+
+export type Invocation = Subscription | Unsubscription | KeepAlive | Aggregation
 
 export class Invocations {
     public static subscription(id: number, method: string, args: Map<string, any>): Subscription {
@@ -35,6 +40,10 @@ export class Invocations {
 
     public static keepAlive(): KeepAlive {
         return {type: InvocationType.KeepAlive}
+    }
+
+    public static aggregation(...invocations: Invocation[]): Aggregation {
+        return {type: InvocationType.Aggregation, invocations} as Aggregation;
     }
 }
 
