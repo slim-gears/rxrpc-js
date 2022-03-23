@@ -86,9 +86,9 @@ export class RxRpcHttpConnection implements RxRpcConnection {
 
     private async observeAsync(observer: Observer<string>) {
         this.longPollInProgress = true
-        const request = await RxRpcHttpConnection.requestConfig(this.interceptors).toPromise()
 
         while (!observer.closed) {
+            const request = await RxRpcHttpConnection.requestConfig(this.interceptors).toPromise()
             log.debug('Beginning observe. Request info: ', request)
             const response = await fetch(`${this.uri}/observe`, {headers: request.headers})
             if (isHttpSuccess(response.status)) {
