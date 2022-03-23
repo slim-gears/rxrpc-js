@@ -20,6 +20,7 @@ import {RxRpcInvocationListener, RxRpcInvocationListenerSubscription} from './rx
 
 export abstract class RxRpcClientOptions {
     keepAlivePeriodMillis?: number
+    aggregationTimeMillis?: number
 }
 
 class InternalSubscription {
@@ -29,7 +30,8 @@ class InternalSubscription {
 
 export class RxRpcClient extends RxRpcInvoker {
     private static defaultOptions: RxRpcClientOptions = {
-        keepAlivePeriodMillis: 60000
+        keepAlivePeriodMillis: 60000,
+        aggregationTimeMillis: 100
     };
 
     private invocationId: number = 0;
@@ -65,8 +67,9 @@ export class RxRpcClient extends RxRpcInvoker {
                 }
             })
             .pipe(share())
+
         this.sendSubject.asObservable().pipe(
-            bufferTime(50),
+            bufferTime(this.options.aggregationTimeMillis),
             filter(buff => buff.length > 0),
             map(buff => buff.length > 1 ? Invocations.aggregation(...buff) : buff[0]))
             .subscribe(invocation => this.connectionObservable
