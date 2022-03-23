@@ -7,7 +7,7 @@ import {
 import {Observable, of} from "rxjs";
 import {HttpAttributes} from "./rxrpc-http-attributes";
 
-function delay(ms: number){
+export function delay(ms: number){
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 
@@ -54,7 +54,7 @@ describe('RxRpc Http Transport test suite', function () {
     it('Connect', async () => {
         mockAndVerifyExpectedHeaders();
         transport.connect().subscribe(connection => incomingMessages.push(connection['clientId']))
-        await delay(1000);
+        await delay(500);
         expect(incomingMessages[0]).toEqual(clientId)
     })
 
@@ -69,7 +69,7 @@ describe('RxRpc Http Transport test suite', function () {
                 incomingMessages.push(msg);
             })
         })
-        await delay(1000);
+        await delay(500);
         expect(incomingMessages.length).toEqual(2);
         expect(incomingMessages[0]).toEqual(JSON.parse(data1));
         expect(incomingMessages[1]).toEqual(JSON.parse(data2));
@@ -85,7 +85,7 @@ describe('RxRpc Http Transport test suite', function () {
                 incomingMessages.push(msg);
             })
         })
-        await delay(1000);
+        await delay(500);
         expect(incomingMessages.length).toEqual(1);
         expect(incomingMessages[0]).toEqual(JSON.parse(data));
     })
@@ -93,7 +93,7 @@ describe('RxRpc Http Transport test suite', function () {
     it('Close', async () => {
         mockAndVerifyExpectedHeaders();
         transport.connect().subscribe(connection => incomingMessages.push(connection))
-        await delay(1000);
+        await delay(500);
         const connection =  incomingMessages[0] as RxRpcHttpConnection;
         mockAndVerifyExpectedHeadersWithClientId();
         connection.close()
@@ -103,7 +103,7 @@ describe('RxRpc Http Transport test suite', function () {
     it('Error', async () => {
         mockAndVerifyExpectedHeaders();
         transport.connect().subscribe(connection => incomingMessages.push(connection))
-        await delay(1000);
+        await delay(500);
         const connection =  incomingMessages[0] as RxRpcHttpConnection;
         mockAndVerifyExpectedHeadersWithClientId();
         connection.error(null)

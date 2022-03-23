@@ -3,6 +3,7 @@ import {of, Subject} from 'rxjs'
 import {RxRpcClient} from './rxrpc-client';
 import {Invocation, Subscription, Unsubscription} from './data/invocation';
 import {Response} from './data/response';
+import {delay} from "./rxrpc-http-transport.spec";
 
 describe('RxRpc Client test suite', function() {
     let sentMessages: any[];
@@ -28,10 +29,11 @@ describe('RxRpc Client test suite', function() {
         client = new RxRpcClient(transport);
     });
 
-    it('Method invocation sends message', () => {
+    it('Method invocation sends message', async () => {
         const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
         expect(sentMessages.length).toEqual(0);
         observable.subscribe();
+        await delay(500)
         expect(sentMessages.length).toEqual(1);
         const invocation = <Subscription>sentMessages[0];
         expect(invocation.method).toEqual('testMethod');
@@ -40,26 +42,31 @@ describe('RxRpc Client test suite', function() {
         expect(invocation.arguments['arg2']).toEqual('2');
     });
 
-    it('Unsubscription sends message', () => {
+    it('Unsubscription sends message', async () => {
         const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
 
         expect(sentMessages.length).toEqual(0);
 
         const subscription = observable.subscribe();
+        await delay(500)
+
         expect(sentMessages.length).toEqual(1);
         const subscriptionInvocation = <Subscription>sentMessages[0];
         expect(subscriptionInvocation.invocationId).toEqual(1);
 
         subscription.unsubscribe();
+        await delay(500)
+
         expect(sentMessages.length).toEqual(2);
         const unsubscriptionInvocation = <Unsubscription>sentMessages[1];
         expect(unsubscriptionInvocation.invocationId).toEqual(1);
         expect(errors.length).toEqual(0);
     });
 
-    it('Client closes transport', () => {
+    it('Client closes transport', async () => {
         const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
         observable.subscribe();
+        await delay(500)
         client.close();
         expect(closedCalled).toBe(true);
         expect(errors.length).toEqual(0);
@@ -89,44 +96,52 @@ describe('RxRpc Client test suite', function() {
         expect(errors.length).toEqual(0);
     });
 
-    it('On error - report to all subscribers', () => {
+    it('On error - report to all subscribers', async () => {
         messageSubject.error(new Error("Connection error"));
         const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
         let receivedErrors = [];
         observable.subscribe(() => {}, error => receivedErrors.push(error));
+        await delay(500)
         expect(receivedErrors.length).toEqual(1);
         expect(receivedErrors[0].message).toEqual("Connection error");
         expect(errors.length).toEqual(0);
     });
 
-    it('Shared invocation when arguments match should reuse existing', () => {
+    it('Shared invocation when arguments match should reuse existing', async () => {
        const observable1 = client.invokeShared('testMethod', 0, {arg1: 1, arg2: '2'});
        const observable2 = client.invokeShared('testMethod', 0, {arg1: 1, arg2: '2'});
        expect(sentMessages.length).toEqual(0);
 
        const subscription1 = observable1.subscribe();
+       await delay(500)
+
        expect(sentMessages.length).toEqual(1);
        expect(sentMessages[0]).toEqual({ type: 'Subscription', invocationId: 1, method: 'testMethod', arguments: { arg1: 1, arg2: '2' } });
 
        const subscription2 = observable2.subscribe();
+       await delay(500)
        expect(sentMessages.length).toEqual(1);
 
        subscription1.unsubscribe();
+       await delay(500)
        expect(sentMessages.length).toEqual(1);
 
        subscription2.unsubscribe();
+       await delay(500)
        expect(sentMessages.length).toEqual(2);
        expect(sentMessages[1]).toEqual({ type: 'Unsubscription', invocationId: 1 });
        expect(errors.length).toEqual(0);
     });
 
-    it('Shared replay should replay only provided number of entries', () => {
+    it('Shared replay should replay only provided number of entries', async () => {
         const observable1 = client.invokeShared('testMethod', 2, {arg1: 1, arg2: '2'});
         const observable2 = client.invokeShared('testMethod', 2, {arg1: 1, arg2: '2'});
         expect(sentMessages.length).toEqual(0);
 
         const receivedData1 = [];
         observable1.subscribe(next => receivedData1.push(next));
+        await delay(500)
+
         messageSubject.next({
             invocationId: 1,
             result: {type: "Data", data: "data1", error: null}
