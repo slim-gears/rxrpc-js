@@ -31,7 +31,7 @@ class InternalSubscription {
 export class RxRpcClient extends RxRpcInvoker {
     private static defaultOptions: RxRpcClientOptions = {
         keepAlivePeriodMillis: 60000,
-        aggregationTimeMillis: 100
+        aggregationTimeMillis: 50
     };
 
     private invocationId: number = 0;
