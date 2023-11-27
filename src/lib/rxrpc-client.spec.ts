@@ -1,5 +1,5 @@
 import {RxRpcConnection, RxRpcTransport} from './rxrpc-transport'
-import {of, Subject} from 'rxjs'
+import {of, Subject, throwError} from 'rxjs'
 import {RxRpcClient} from './rxrpc-client';
 import {Invocation, Subscription, Unsubscription} from './data/invocation';
 import {Response} from './data/response';
@@ -101,10 +101,24 @@ describe('RxRpc Client test suite', function() {
         const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
         let receivedErrors = [];
         observable.subscribe(() => {}, error => receivedErrors.push(error));
-        await delay(500)
+        await delay(500);
         expect(receivedErrors.length).toEqual(1);
         expect(receivedErrors[0].message).toEqual("Connection error");
         expect(errors.length).toEqual(0);
+    });
+
+    it('On error - failed to connect', async() => {
+        let receivedErrors = [];
+        transport = { connect: () => {
+          return throwError("Connection failed");
+        }};
+        client = new RxRpcClient(transport);
+
+        const observable = client.invoke('testMethod', {arg1: 1, arg2: '2'});
+        observable.subscribe(() => {}, error => receivedErrors.push(error));
+        await delay(500);
+        expect(receivedErrors.length).toEqual(1);
+        expect(receivedErrors[0]).toEqual("Connection failed");
     });
 
     it('Shared invocation when arguments match should reuse existing', async () => {

@@ -77,8 +77,8 @@ export class RxRpcClient extends RxRpcInvoker {
                     this.listeners.forEach(l => l.onInvocation(invocation));
                     connection.send(invocation);
                 }, error => {
-                    this.currentConnection.error(error);
-                    this.close();
+                    this.currentConnection?.error(error);
+                    this.close(error);
                 }))
     }
 
@@ -139,15 +139,16 @@ export class RxRpcClient extends RxRpcInvoker {
         return JSON.stringify(subscription);
     }
 
-    public close() {
+    public close(error: any = null) {
         if (this.isConnected()) {
-            this.currentConnection.close();
-            this.onDisconnected();
+            this.currentConnection?.close();
+
         }
+        this.onDisconnected(error);
     }
 
     private isConnected(): boolean {
-        return this.currentConnection && true;
+        return !!this.currentConnection;
     }
 
     private send(invocation: Invocation) {
